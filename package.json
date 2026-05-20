@@ -1,0 +1,60 @@
+{
+  "name": "zerogpu-cli",
+  "version": "0.0.1",
+  "description": "Command-line interface for ZeroGPU.",
+  "type": "module",
+  "bin": {
+    "zerogpu": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "zerogpu",
+    "cli",
+    "gpu"
+  ],
+  "author": {
+    "name": "ZeroGPU",
+    "email": "hello@zerogpu.ai",
+    "url": "https://zerogpu.ai"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zerogpu/cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zerogpu/cli/issues"
+  },
+  "homepage": "https://github.com/zerogpu/cli#readme",
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "@types/node": "^20.14.0",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}
