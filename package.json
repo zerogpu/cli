@@ -4,7 +4,7 @@
   "description": "Command-line interface for ZeroGPU.",
   "type": "module",
   "bin": {
-    "zerogpu": "./dist/index.js"
+    "zerogpu": "dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
