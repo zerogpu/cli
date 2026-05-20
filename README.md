@@ -8,13 +8,14 @@ Command-line interface for ZeroGPU.
 npm install -g zerogpu-cli
 ```
 
+Requires Node.js 20+.
+
 ## Usage
 
 ```bash
+zerogpu --version
 zerogpu --help
 ```
-
-> This README is a placeholder. Full documentation will be added soon.
 
 ## License
 
