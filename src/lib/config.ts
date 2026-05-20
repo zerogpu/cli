@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 export interface Config {
   apiKey?: string;
+  projectId?: string;
 }
 
 export function configDir(): string {

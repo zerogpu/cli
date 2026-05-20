@@ -33,3 +33,28 @@ export function getApiKey(): ResolvedKey | undefined {
   if (fromEnv) return { apiKey: fromEnv, source: "env var" };
   return undefined;
 }
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function validateProjectId(input: string): ValidationResult {
+  const id = (input ?? "").trim();
+  if (!id) return { ok: false, reason: "Project ID is empty." };
+  if (!UUID_RE.test(id)) {
+    return { ok: false, reason: "Project ID must be a UUID." };
+  }
+  return { ok: true, key: id };
+}
+
+export interface ResolvedProjectId {
+  projectId: string;
+  source: "config file" | "env var";
+}
+
+export function getProjectId(): ResolvedProjectId | undefined {
+  const fromConfig = readConfig().projectId;
+  if (fromConfig) return { projectId: fromConfig, source: "config file" };
+  const fromEnv = process.env["ZEROGPU_PROJECT_ID"];
+  if (fromEnv) return { projectId: fromEnv, source: "env var" };
+  return undefined;
+}

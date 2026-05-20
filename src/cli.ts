@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
+import { registerClassifyIabEnrichedCommand } from "./commands/classifyIabEnriched.js";
 import { registerLoginCommand } from "./commands/login.js";
 import { registerStatusCommand } from "./commands/status.js";
 
@@ -20,6 +21,7 @@ export function buildProgram(): Command {
 
   registerLoginCommand(program);
   registerStatusCommand(program);
+  registerClassifyIabEnrichedCommand(program);
 
   return program;
 }

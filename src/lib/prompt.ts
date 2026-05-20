@@ -36,3 +36,24 @@ export function promptMasked(question: string): Promise<string> {
     });
   });
 }
+
+export function promptPlain(question: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const rl: Interface = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true,
+    });
+
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+
+    rl.on("SIGINT", () => {
+      rl.close();
+      process.stdout.write("\n");
+      reject(new Error("Aborted."));
+    });
+  });
+}
