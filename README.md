@@ -43,7 +43,7 @@ The official command-line interface for [ZeroGPU](https://zerogpu.ai) — run fa
 ## Installation
 
 ```bash
-npm install -g zerogpu-cli
+npm install -g zerogpu-cli@latest
 ```
 
 Requires **Node.js 20+**.
