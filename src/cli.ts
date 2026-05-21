@@ -26,11 +26,10 @@ const pkg = JSON.parse(
 const MIN_SUPPORTED_VERSION = "2.0.0";
 
 function parseVersion(v: string): [number, number, number] {
-  const [major, minor, patch] = v
-    .split("-")[0]
+  const parts = (v.split("-")[0] ?? "0.0.0")
     .split(".")
     .map((n) => Number.parseInt(n, 10) || 0);
-  return [major, minor, patch];
+  return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0];
 }
 
 function isVersionBelow(current: string, minimum: string): boolean {
