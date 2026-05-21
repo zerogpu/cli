@@ -5,13 +5,13 @@ import {
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 
-const MODEL = "zlm-v1-iab-classify-edge-enriched";
+const MODEL = "gliner-multi-pii-v1";
 
-export function registerClassifyIabEnrichedCommand(program: Command): void {
+export function registerRedactPiiCommand(program: Command): void {
   program
-    .command("classify_iab_enriched <text>")
+    .command("redact_pii <text>")
     .description(
-      "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
+      "Detect and redact PII entities in text (persons, phone numbers, emails, etc.).",
     )
     .action(async (text: string) => {
       const apiKey = getApiKey();
@@ -36,6 +36,10 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
           body: JSON.stringify({
             model: MODEL,
             input: text,
+            metadata: {
+              mask: "label",
+              usecase: "redact",
+            },
           }),
         });
       } catch (err) {
@@ -56,7 +60,7 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
         (c) => c.type === "output_text",
       )?.text ?? data.output?.[0]?.content?.[0]?.text;
       if (!content) {
-        console.error("Response did not contain any classification content.");
+        console.error("Response did not contain any redaction content.");
         console.error(JSON.stringify(data, null, 2));
         process.exit(1);
       }

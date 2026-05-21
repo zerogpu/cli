@@ -5,13 +5,13 @@ import {
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 
-const MODEL = "zlm-v1-iab-classify-edge-enriched";
+const MODEL = "zlm-v1-iab-classify-edge";
 
-export function registerClassifyIabEnrichedCommand(program: Command): void {
+export function registerClassifyIabCommand(program: Command): void {
   program
-    .command("classify_iab_enriched <text>")
+    .command("classify_iab <text>")
     .description(
-      "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
+      "Classify text with the IAB edge model (audience and content taxonomy).",
     )
     .action(async (text: string) => {
       const apiKey = getApiKey();

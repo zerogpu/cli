@@ -5,13 +5,13 @@ import {
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 
-const MODEL = "zlm-v1-iab-classify-edge-enriched";
+const MODEL = "zlm-v1-followup-questions-edge";
 
-export function registerClassifyIabEnrichedCommand(program: Command): void {
+export function registerGenerateFollowupsCommand(program: Command): void {
   program
-    .command("classify_iab_enriched <text>")
+    .command("generate_followups <text>")
     .description(
-      "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
+      "Generate contextual follow-up questions with the ZeroGPU followup edge model.",
     )
     .action(async (text: string) => {
       const apiKey = getApiKey();
@@ -56,7 +56,7 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
         (c) => c.type === "output_text",
       )?.text ?? data.output?.[0]?.content?.[0]?.text;
       if (!content) {
-        console.error("Response did not contain any classification content.");
+        console.error("Response did not contain any follow-up content.");
         console.error(JSON.stringify(data, null, 2));
         process.exit(1);
       }

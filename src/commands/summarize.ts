@@ -5,14 +5,12 @@ import {
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 
-const MODEL = "zlm-v1-iab-classify-edge-enriched";
+const MODEL = "t5-small";
 
-export function registerClassifyIabEnrichedCommand(program: Command): void {
+export function registerSummarizeCommand(program: Command): void {
   program
-    .command("classify_iab_enriched <text>")
-    .description(
-      "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
-    )
+    .command("summarize <text>")
+    .description("Summarize text using the t5-small model.")
     .action(async (text: string) => {
       const apiKey = getApiKey();
       const projectId = getProjectId();
@@ -56,7 +54,7 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
         (c) => c.type === "output_text",
       )?.text ?? data.output?.[0]?.content?.[0]?.text;
       if (!content) {
-        console.error("Response did not contain any classification content.");
+        console.error("Response did not contain any summary content.");
         console.error(JSON.stringify(data, null, 2));
         process.exit(1);
       }

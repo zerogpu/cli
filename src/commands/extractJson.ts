@@ -5,15 +5,19 @@ import {
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 
-const MODEL = "zlm-v1-iab-classify-edge-enriched";
+const MODEL = "gliner2-base-v1";
 
-export function registerClassifyIabEnrichedCommand(program: Command): void {
+export function registerExtractJsonCommand(program: Command): void {
   program
-    .command("classify_iab_enriched <text>")
+    .command("extract_json <text>")
     .description(
-      "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
+      "Extract structured JSON from text according to a provided schema.",
     )
-    .action(async (text: string) => {
+    .requiredOption(
+      "-s, --schema <json>",
+      'Schema as a JSON string, e.g. \'{"contact":["name::str::Full name","email::str::Email address"]}\'',
+    )
+    .action(async (text: string, options: { schema: string }) => {
       const apiKey = getApiKey();
       const projectId = getProjectId();
 
@@ -21,6 +25,15 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
         console.error(
           "You're not fully signed in yet. Run 'zerogpu login' to set your API key and project ID.",
         );
+        process.exit(1);
+      }
+
+      let schema: unknown;
+      try {
+        schema = JSON.parse(options.schema);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Invalid --schema JSON: ${message}`);
         process.exit(1);
       }
 
@@ -36,6 +49,10 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
           body: JSON.stringify({
             model: MODEL,
             input: text,
+            metadata: {
+              schema,
+              usecase: "json",
+            },
           }),
         });
       } catch (err) {
@@ -56,7 +73,7 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
         (c) => c.type === "output_text",
       )?.text ?? data.output?.[0]?.content?.[0]?.text;
       if (!content) {
-        console.error("Response did not contain any classification content.");
+        console.error("Response did not contain any extraction content.");
         console.error(JSON.stringify(data, null, 2));
         process.exit(1);
       }

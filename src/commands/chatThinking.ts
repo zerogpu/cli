@@ -5,13 +5,13 @@ import {
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 
-const MODEL = "zlm-v1-iab-classify-edge-enriched";
+const MODEL = "LFM2.5-1.2B-Thinking";
 
-export function registerClassifyIabEnrichedCommand(program: Command): void {
+export function registerChatThinkingCommand(program: Command): void {
   program
-    .command("classify_iab_enriched <text>")
+    .command("chat_thinking <text>")
     .description(
-      "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
+      "Chat with the LFM2.5 Thinking model, which returns reasoning alongside its answer.",
     )
     .action(async (text: string) => {
       const apiKey = getApiKey();
@@ -52,11 +52,11 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
       }
 
       const data = (await response.json()) as ResponsesApiResponse;
-      const content = data.output?.[0]?.content?.find(
-        (c) => c.type === "output_text",
-      )?.text ?? data.output?.[0]?.content?.[0]?.text;
+      const content =
+        data.output?.[0]?.content?.find((c) => c.type === "output_text")
+          ?.text ?? data.output?.[0]?.content?.[0]?.text;
       if (!content) {
-        console.error("Response did not contain any classification content.");
+        console.error("Response did not contain any chat content.");
         console.error(JSON.stringify(data, null, 2));
         process.exit(1);
       }
