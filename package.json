@@ -30,8 +30,25 @@
   },
   "keywords": [
     "zerogpu",
-    "cli",
-    "gpu"
+    "ai-inference",
+    "edge-inference",
+    "distributed-inference",
+    "small-language-models",
+    "slm",
+    "nano-language-models",
+    "openai-compatible",
+    "iab-classification",
+    "zero-shot-classification",
+    "named-entity-recognition",
+    "gliner",
+    "pii-detection",
+    "pii-redaction",
+    "text-summarization",
+    "structured-extraction",
+    "llm-cli",
+    "ai-cli",
+    "inference-cli",
+    "typescript"
   ],
   "author": {
     "name": "ZeroGPU",
