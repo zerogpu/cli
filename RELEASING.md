@@ -13,12 +13,14 @@ npm run release
 ## Variants
 
 ```bash
-# minor bump (new feature, e.g. 0.0.2 → 0.1.0)
-npm version minor && git push --follow-tags
+# minor bump (new feature, e.g. 2.1.0 → 2.2.0)
+npm run release:minor
 
-# major bump (breaking change, e.g. 0.1.0 → 1.0.0)
-npm version major && git push --follow-tags
+# major bump (breaking change, e.g. 2.1.0 → 3.0.0)
+npm run release:major
 ```
+
+Each script bumps `package.json`, creates a commit and `vX.Y.Z` tag, and pushes both — same flow as `npm run release`, just with a different version segment.
 
 ## Pre-flight checklist
 
