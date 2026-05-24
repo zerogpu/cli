@@ -8,6 +8,18 @@ export function promptMasked(question: string): Promise<string> {
       write(chunk, _encoding, callback) {
         if (!muted) {
           process.stdout.write(chunk);
+        } else {
+          const str = chunk.toString("utf8");
+          let masked = "";
+          for (const ch of str) {
+            const code = ch.charCodeAt(0);
+            if (code >= 0x20 && code !== 0x7f) {
+              masked += "*";
+            } else {
+              masked += ch;
+            }
+          }
+          process.stdout.write(masked);
         }
         callback();
       },
