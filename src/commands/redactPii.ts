@@ -10,6 +10,7 @@ const MODEL = "gliner-multi-pii-v1";
 export function registerRedactPiiCommand(program: Command): void {
   program
     .command("redact_pii <text>")
+    .alias("redact-pii")
     .description(
       "Detect and redact PII entities in text (persons, phone numbers, emails, etc.).",
     )

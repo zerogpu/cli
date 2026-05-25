@@ -10,6 +10,7 @@ const MODEL = "gliner2-base-v1";
 export function registerClassifyStructuredCommand(program: Command): void {
   program
     .command("classify_structured <text>")
+    .alias("classify-structured")
     .description(
       "Classify text against a structured schema of categories and labels.",
     )

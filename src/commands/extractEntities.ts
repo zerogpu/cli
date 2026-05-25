@@ -15,6 +15,7 @@ function collectLabel(value: string, previous: string[]): string[] {
 export function registerExtractEntitiesCommand(program: Command): void {
   program
     .command("extract_entities <text>")
+    .alias("extract-entities")
     .description(
       "Extract named entities from text using the GLiNER2 model with custom labels.",
     )

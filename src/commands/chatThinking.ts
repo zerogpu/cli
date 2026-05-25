@@ -10,6 +10,7 @@ const MODEL = "LFM2.5-1.2B-Thinking";
 export function registerChatThinkingCommand(program: Command): void {
   program
     .command("chat_thinking <text>")
+    .alias("chat-thinking")
     .description(
       "Chat with the LFM2.5 Thinking model, which returns reasoning alongside its answer.",
     )

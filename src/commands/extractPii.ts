@@ -12,6 +12,7 @@ const DEFAULT_CATEGORIES = ["identity", "contact"];
 export function registerExtractPiiCommand(program: Command): void {
   program
     .command("extract_pii <text>")
+    .alias("extract-pii")
     .description(
       "Extract PII entities from text (persons, emails, phone numbers, etc.).",
     )

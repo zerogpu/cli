@@ -10,6 +10,7 @@ const MODEL = "gliner2-base-v1";
 export function registerExtractJsonCommand(program: Command): void {
   program
     .command("extract_json <text>")
+    .alias("extract-json")
     .description(
       "Extract structured JSON from text according to a provided schema.",
     )

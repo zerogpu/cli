@@ -10,6 +10,7 @@ const MODEL = "zlm-v1-followup-questions-edge";
 export function registerGenerateFollowupsCommand(program: Command): void {
   program
     .command("generate_followups <text>")
+    .alias("generate-followups")
     .description(
       "Generate contextual follow-up questions with the ZeroGPU followup edge model.",
     )

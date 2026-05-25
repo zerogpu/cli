@@ -10,6 +10,7 @@ const MODEL = "zlm-v1-iab-classify-edge";
 export function registerClassifyIabCommand(program: Command): void {
   program
     .command("classify_iab <text>")
+    .alias("classify-iab")
     .description(
       "Classify text with the IAB edge model (audience and content taxonomy).",
     )

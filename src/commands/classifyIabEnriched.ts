@@ -10,6 +10,7 @@ const MODEL = "zlm-v1-iab-classify-edge-enriched";
 export function registerClassifyIabEnrichedCommand(program: Command): void {
   program
     .command("classify_iab_enriched <text>")
+    .alias("classify-iab-enriched")
     .description(
       "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
     )

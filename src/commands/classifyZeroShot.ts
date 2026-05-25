@@ -14,6 +14,7 @@ function collectLabel(value: string, previous: string[]): string[] {
 export function registerClassifyZeroShotCommand(program: Command): void {
   program
     .command("classify_zero_shot <text>")
+    .alias("classify-zero-shot")
     .description(
       "Zero-shot classify text against a set of candidate labels using DeBERTa v3.",
     )
