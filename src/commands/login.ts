@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { Command } from "commander";
 import { validateApiKey, validateProjectId } from "../lib/auth.js";
 import { writeConfig, readConfig } from "../lib/config.js";
@@ -7,6 +8,38 @@ import { upsertEnvExport } from "../lib/shellEnv.js";
 interface LoginOptions {
   apiKey?: string;
   projectId?: string;
+}
+
+const DASHBOARD_URL = "https://platform.zerogpu.ai/dashboard";
+
+function openBrowser(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    let command: string;
+    let args: string[];
+    if (process.platform === "darwin") {
+      command = "open";
+      args = [url];
+    } else if (process.platform === "win32") {
+      command = "cmd";
+      args = ["/c", "start", "", url];
+    } else {
+      command = "xdg-open";
+      args = [url];
+    }
+    try {
+      const child = spawn(command, args, {
+        stdio: "ignore",
+        detached: true,
+      });
+      child.on("error", () => resolve(false));
+      child.on("spawn", () => {
+        child.unref();
+        resolve(true);
+      });
+    } catch {
+      resolve(false);
+    }
+  });
 }
 
 export function registerLoginCommand(program: Command): void {
@@ -20,6 +53,21 @@ export function registerLoginCommand(program: Command): void {
     )
     .action(async (options: LoginOptions) => {
       let rawKey = options.apiKey;
+      let rawProjectId = options.projectId;
+
+      if (!rawKey || !rawProjectId) {
+        const opened = await openBrowser(DASHBOARD_URL);
+        if (opened) {
+          console.log(
+            `Opening ${DASHBOARD_URL} in your browser — grab your Project ID and API Key from there.`,
+          );
+        } else {
+          console.log(
+            `Tip: open ${DASHBOARD_URL} in your browser to grab your Project ID and API Key.`,
+          );
+        }
+      }
+
       if (!rawKey) {
         try {
           rawKey = await promptMasked("Please paste your ZeroGPU API key: ");
@@ -36,7 +84,6 @@ export function registerLoginCommand(program: Command): void {
         process.exit(1);
       }
 
-      let rawProjectId = options.projectId;
       if (!rawProjectId) {
         try {
           rawProjectId = await promptPlain("Please enter your ZeroGPU project ID: ");
