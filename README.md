@@ -144,7 +144,7 @@ zerogpu chat_thinking "If a train leaves at 3pm at 60mph, when does it arrive 18
 
 #### `summarize`
 
-Summarize text with the **t5-small** model.
+Summarize text with the **llama-3.1-8b-instruct-fast** model.
 
 ```bash
 zerogpu summarize "Long article text goes here..."

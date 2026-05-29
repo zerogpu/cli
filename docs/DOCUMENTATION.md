@@ -10,7 +10,7 @@
 - Structured / schema-driven classification and JSON extraction (`gliner2-base-v1`)
 - Named-entity recognition with custom labels (`gliner2-base-v1`)
 - PII extraction & redaction (`gliner-multi-pii-v1`)
-- Text summarization (`t5-small`)
+- Text summarization (`llama-3.1-8b-instruct-fast`)
 - Follow-up question generation (`zlm-v1-followup-questions-edge`)
 
 It is written in TypeScript (ESM, Node ≥ 20), built on [`commander`](https://github.com/tj/commander.js), and ships a single executable: `zerogpu`.
@@ -100,7 +100,7 @@ The CLI exposes the following commands:
 | [`extract_pii`](#410-extract_pii) | Extract PII entities |
 | [`redact_pii`](#411-redact_pii) | Mask PII in-line in the text |
 | [`extract_json`](#412-extract_json) | Schema-driven structured JSON extraction |
-| [`summarize`](#413-summarize) | Summarize text with `t5-small` |
+| [`summarize`](#413-summarize) | Summarize text with `llama-3.1-8b-instruct-fast` |
 | [`generate_followups`](#414-generate_followups) | Generate follow-up questions |
 
 ### Common exit codes
@@ -557,7 +557,7 @@ zerogpu extract_json \
 
 ### 4.13 `summarize`
 
-Summarize text with `t5-small`.
+Summarize text with `llama-3.1-8b-instruct-fast`.
 
 **Synopsis**
 ```

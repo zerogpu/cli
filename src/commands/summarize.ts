@@ -5,12 +5,12 @@ import {
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 
-const MODEL = "t5-small";
+const MODEL = "llama-3.1-8b-instruct-fast";
 
 export function registerSummarizeCommand(program: Command): void {
   program
     .command("summarize <text>")
-    .description("Summarize text using the t5-small model.")
+    .description("Summarize text using the llama-3.1-8b-instruct-fast model.")
     .action(async (text: string) => {
       const apiKey = getApiKey();
       const projectId = getProjectId();
