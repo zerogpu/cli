@@ -4,6 +4,7 @@ import {
   RESPONSES_ENDPOINT,
   type ResponsesApiResponse,
 } from "../lib/responses.js";
+import { recordAndMaybeNotify } from "../lib/savings.js";
 
 const MODEL = "LFM2.5-1.2B-Thinking";
 
@@ -68,5 +69,7 @@ export function registerChatThinkingCommand(program: Command): void {
       } catch {
         console.log(content);
       }
+
+      recordAndMaybeNotify({ model: MODEL, usage: data.usage });
     });
 }

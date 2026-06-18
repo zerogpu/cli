@@ -4,6 +4,7 @@ import {
   RESPONSES_ENDPOINT,
   type ResponsesApiResponse,
 } from "../lib/responses.js";
+import { recordAndMaybeNotify } from "../lib/savings.js";
 
 const MODEL = "llama-3.1-8b-instruct-fast";
 
@@ -65,5 +66,7 @@ export function registerSummarizeCommand(program: Command): void {
       } catch {
         console.log(content);
       }
+
+      recordAndMaybeNotify({ model: MODEL, usage: data.usage });
     });
 }

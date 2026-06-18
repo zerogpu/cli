@@ -4,6 +4,7 @@ import {
   RESPONSES_ENDPOINT,
   type ResponsesApiResponse,
 } from "../lib/responses.js";
+import { recordAndMaybeNotify } from "../lib/savings.js";
 
 const MODEL = "deberta-v3-small";
 
@@ -102,6 +103,8 @@ export function registerClassifyZeroShotCommand(program: Command): void {
         } catch {
           console.log(content);
         }
+
+        recordAndMaybeNotify({ model: MODEL, usage: data.usage });
       },
     );
 }

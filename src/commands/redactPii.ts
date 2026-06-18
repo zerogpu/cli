@@ -4,6 +4,7 @@ import {
   RESPONSES_ENDPOINT,
   type ResponsesApiResponse,
 } from "../lib/responses.js";
+import { recordAndMaybeNotify } from "../lib/savings.js";
 
 const MODEL = "gliner-multi-pii-v1";
 
@@ -72,5 +73,7 @@ export function registerRedactPiiCommand(program: Command): void {
       } catch {
         console.log(content);
       }
+
+      recordAndMaybeNotify({ model: MODEL, usage: data.usage });
     });
 }

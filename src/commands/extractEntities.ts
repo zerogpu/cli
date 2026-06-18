@@ -4,6 +4,7 @@ import {
   RESPONSES_ENDPOINT,
   type ResponsesApiResponse,
 } from "../lib/responses.js";
+import { recordAndMaybeNotify } from "../lib/savings.js";
 
 const MODEL = "gliner2-base-v1";
 const DEFAULT_THRESHOLD = 0.3;
@@ -116,6 +117,8 @@ export function registerExtractEntitiesCommand(program: Command): void {
         } catch {
           console.log(content);
         }
+
+        recordAndMaybeNotify({ model: MODEL, usage: data.usage });
       },
     );
 }

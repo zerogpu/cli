@@ -9,6 +9,7 @@ import { registerClassifyIabCommand } from "./commands/classifyIab.js";
 import { registerClassifyIabEnrichedCommand } from "./commands/classifyIabEnriched.js";
 import { registerClassifyStructuredCommand } from "./commands/classifyStructured.js";
 import { registerClassifyZeroShotCommand } from "./commands/classifyZeroShot.js";
+import { registerCostSavingsCommand } from "./commands/costSavings.js";
 import { registerExtractEntitiesCommand } from "./commands/extractEntities.js";
 import { registerExtractJsonCommand } from "./commands/extractJson.js";
 import { registerExtractPiiCommand } from "./commands/extractPii.js";
@@ -104,6 +105,7 @@ export function buildProgram(): Command {
   registerSummarizeCommand(program);
   registerChatCommand(program);
   registerChatThinkingCommand(program);
+  registerCostSavingsCommand(program);
 
   return program;
 }
