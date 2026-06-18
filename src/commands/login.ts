@@ -102,11 +102,16 @@ export function registerLoginCommand(program: Command): void {
       }
 
       const existing = readConfig();
-      writeConfig({
-        ...existing,
-        apiKey: result.key,
-        ...(projectId ? { projectId } : {}),
-      });
+      // Re-login clears any previously pinned project ID; it is restored only
+      // when --project-id is passed this run, so login without it returns to the
+      // unpinned (derive-from-key) state.
+      const next = { ...existing, apiKey: result.key };
+      if (projectId) {
+        next.projectId = projectId;
+      } else {
+        delete next.projectId;
+      }
+      writeConfig(next);
 
       const env = upsertEnvExport("ZEROGPU_API_KEY", result.key);
       process.env["ZEROGPU_API_KEY"] = result.key;
