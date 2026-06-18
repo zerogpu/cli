@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { Command } from "commander";
 import { validateApiKey, validateProjectId } from "../lib/auth.js";
 import { writeConfig, readConfig } from "../lib/config.js";
-import { promptMasked, promptPlain } from "../lib/prompt.js";
+import { promptMasked } from "../lib/prompt.js";
 import { upsertEnvExport } from "../lib/shellEnv.js";
 
 interface LoginOptions {
@@ -49,21 +49,21 @@ export function registerLoginCommand(program: Command): void {
     .option("--api-key <key>", "Provide your API key directly (skips the prompt).")
     .option(
       "--project-id <id>",
-      "Provide your ZeroGPU project ID directly (skips the prompt).",
+      "Optionally pin a ZeroGPU project ID. If omitted, the project is derived from your API key.",
     )
     .action(async (options: LoginOptions) => {
       let rawKey = options.apiKey;
-      let rawProjectId = options.projectId;
+      const rawProjectId = options.projectId;
 
-      if (!rawKey || !rawProjectId) {
+      if (!rawKey) {
         const opened = await openBrowser(DASHBOARD_URL);
         if (opened) {
           console.log(
-            `Opening ${DASHBOARD_URL} in your browser — grab your Project ID and API Key from there.`,
+            `Opening ${DASHBOARD_URL} in your browser — grab your API Key from there.`,
           );
         } else {
           console.log(
-            `Tip: open ${DASHBOARD_URL} in your browser to grab your Project ID and API Key.`,
+            `Tip: open ${DASHBOARD_URL} in your browser to grab your API Key.`,
           );
         }
       }
@@ -84,31 +84,28 @@ export function registerLoginCommand(program: Command): void {
         process.exit(1);
       }
 
-      if (!rawProjectId) {
-        try {
-          rawProjectId = await promptPlain("Please enter your ZeroGPU project ID: ");
-        } catch {
-          console.error("Login cancelled. No changes were made.");
+      // Project ID is optional — the backend derives the project from the API key.
+      // Validate and store it only when the caller explicitly provided one.
+      let projectId: string | undefined;
+      if (rawProjectId) {
+        const projectResult = validateProjectId(rawProjectId);
+        if (!projectResult.ok) {
+          console.error(
+            `That doesn't look like a valid project ID — ${projectResult.reason}`,
+          );
+          console.error(
+            "It should be a UUID like 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a. Please try again.",
+          );
           process.exit(1);
         }
-      }
-
-      const projectResult = validateProjectId(rawProjectId ?? "");
-      if (!projectResult.ok) {
-        console.error(
-          `That doesn't look like a valid project ID — ${projectResult.reason}`,
-        );
-        console.error(
-          "It should be a UUID like 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a. Please try again.",
-        );
-        process.exit(1);
+        projectId = projectResult.key;
       }
 
       const existing = readConfig();
       writeConfig({
         ...existing,
         apiKey: result.key,
-        projectId: projectResult.key,
+        ...(projectId ? { projectId } : {}),
       });
 
       const env = upsertEnvExport("ZEROGPU_API_KEY", result.key);
