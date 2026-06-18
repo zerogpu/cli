@@ -97,17 +97,18 @@ Run `zerogpu <command> --help` for command-level help.
 
 #### `login`
 
-Sign in to ZeroGPU. Prompts for your API key (masked input) and project ID, validates them, and persists the credentials.
+Sign in to ZeroGPU. Prompts for your API key (masked input), validates it, and persists the credential. The project is derived from the API key; pass `--project-id` only if you want to pin a specific project.
 
 ```bash
 zerogpu login
+zerogpu login --api-key zgpu-api-xxxxxxxx
 zerogpu login --api-key zgpu-api-xxxxxxxx --project-id 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a
 ```
 
 | Option | Description |
 |---|---|
 | `--api-key <key>` | Provide the API key directly (skips the prompt). |
-| `--project-id <id>` | Provide the project ID directly (skips the prompt). |
+| `--project-id <id>` | _(optional)_ Pin a specific project ID; derived from the API key if omitted. |
 
 #### `status`
 

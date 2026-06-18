@@ -19,9 +19,9 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
       const apiKey = getApiKey();
       const projectId = getProjectId();
 
-      if (!apiKey || !projectId) {
+      if (!apiKey) {
         console.error(
-          "You're not fully signed in yet. Run 'zerogpu login' to set your API key and project ID.",
+          "You're not fully signed in yet. Run 'zerogpu login' to set your API key.",
         );
         process.exit(1);
       }
@@ -33,7 +33,7 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
           headers: {
             "content-type": "application/json",
             "x-api-key": apiKey.apiKey,
-            "x-project-id": projectId.projectId,
+            ...(projectId ? { "x-project-id": projectId.projectId } : {}),
           },
           body: JSON.stringify({
             model: MODEL,

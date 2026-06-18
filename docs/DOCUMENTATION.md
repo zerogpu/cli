@@ -75,10 +75,10 @@ Credentials are persisted to a local config file and `ZEROGPU_API_KEY` is added 
 | Variable | Purpose |
 |---|---|
 | `ZEROGPU_API_KEY` | API key. Used as fallback if no config file is present. Written by `zerogpu login`. |
-| `ZEROGPU_PROJECT_ID` | Project ID. Used as fallback if no config file is present. |
+| `ZEROGPU_PROJECT_ID` | _(optional)_ Project ID. Used as fallback if no config file is present. The backend derives the project from the API key, so this is only needed to pin a specific project. |
 
 ### Resolution order
-For every request the CLI resolves credentials by checking the **config file first**, then the corresponding **environment variable**. If either credential is missing, the command exits with code `1` and prompts you to run `zerogpu login`.
+For every request the CLI resolves credentials by checking the **config file first**, then the corresponding **environment variable**. If the API key is missing, the command exits with code `1` and prompts you to run `zerogpu login`. The project ID is optional and sent (as `x-project-id`) only when present.
 
 ---
 
@@ -128,7 +128,7 @@ zerogpu login [--api-key <key>] [--project-id <id>]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--api-key <key>` | string | optional | Provide the API key non-interactively. Must start with `zgpu-api-`. If omitted, the CLI shows a masked prompt. |
-| `--project-id <id>` | string (UUID) | optional | Provide the Project ID non-interactively. Must be a valid UUID v4 string. If omitted, the CLI prompts plainly. |
+| `--project-id <id>` | string (UUID) | optional | Pin a specific Project ID. Must be a valid UUID v4 string. If omitted, the project is derived from the API key (the CLI does not prompt for it). |
 
 **Examples**
 ```bash
@@ -624,7 +624,7 @@ All inference commands POST to:
 POST https://api.zerogpu.ai/v1/responses
 Content-Type: application/json
 x-api-key:    <ZEROGPU_API_KEY>
-x-project-id: <ZEROGPU_PROJECT_ID>
+x-project-id: <ZEROGPU_PROJECT_ID>   # optional; sent only when a project is configured
 ```
 
 The request body is:
@@ -663,7 +663,7 @@ It picks the first `content` entry whose `type === "output_text"` (falling back 
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `You're not fully signed in yet.` | Missing config + missing env var | Run `zerogpu login`, or export `ZEROGPU_API_KEY` and `ZEROGPU_PROJECT_ID`. |
+| `You're not fully signed in yet.` | Missing config + missing env var | Run `zerogpu login`, or export `ZEROGPU_API_KEY` (`ZEROGPU_PROJECT_ID` is optional). |
 | `That doesn't look like a valid API key` | Key doesn't start with `zgpu-api-` | Copy the full key from the ZeroGPU console. |
 | `Project ID must be a UUID.` | Pasted a name/slug | Use the UUID shown next to the project in the console. |
 | `Request failed with status 401` | Bad/revoked key or wrong project | Re-run `zerogpu login`. |
