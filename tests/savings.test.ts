@@ -10,6 +10,8 @@ import {
   recordAndMaybeNotify,
   readSavings,
   savingsPath,
+  formatNotice,
+  formatReport,
   type SavingsState,
 } from "../src/lib/savings.js";
 
@@ -123,23 +125,23 @@ function baseState(overrides: Partial<SavingsState> = {}): SavingsState {
 
 describe("shouldShowNotice cadence", () => {
   it("never shows within the cooldown (no two in a row)", () => {
-    const s = baseState({ totalRequests: 12, notice: { lastShownAtRequest: 10, lastMilestoneUsd: 0 } });
-    // gap = 2 < MIN_GAP(3) → false regardless of random
+    const s = baseState({ totalRequests: 11, notice: { lastShownAtRequest: 10, lastMilestoneUsd: 0 } });
+    // gap = 1 < MIN_GAP(2) → false regardless of random
     expect(shouldShowNotice(s, () => 0)).toBe(false);
     expect(shouldShowNotice(s, () => 0.99)).toBe(false);
   });
 
   it("is guaranteed once the gap reaches MAX_GAP", () => {
-    const s = baseState({ totalRequests: 16, notice: { lastShownAtRequest: 10, lastMilestoneUsd: 0 } });
-    // gap = 6 >= MAX_GAP → always true
+    const s = baseState({ totalRequests: 14, notice: { lastShownAtRequest: 10, lastMilestoneUsd: 0 } });
+    // gap = 4 >= MAX_GAP → always true
     expect(shouldShowNotice(s, () => 0.99)).toBe(true);
   });
 
   it("uses probability in the eligible window", () => {
-    const s = baseState({ totalRequests: 14, notice: { lastShownAtRequest: 10, lastMilestoneUsd: 0 } });
-    // gap = 4, between MIN_GAP and MAX_GAP
-    expect(shouldShowNotice(s, () => 0.1)).toBe(true); // < 0.5
-    expect(shouldShowNotice(s, () => 0.9)).toBe(false); // >= 0.5
+    const s = baseState({ totalRequests: 13, notice: { lastShownAtRequest: 10, lastMilestoneUsd: 0 } });
+    // gap = 3, between MIN_GAP and MAX_GAP
+    expect(shouldShowNotice(s, () => 0.1)).toBe(true); // < 0.6
+    expect(shouldShowNotice(s, () => 0.9)).toBe(false); // >= 0.6
   });
 
   it("forces a show when a new dollar milestone is crossed", () => {
@@ -150,6 +152,33 @@ describe("shouldShowNotice cadence", () => {
     });
     // gap = 2 (>= 2) and milestone crossed → true even though cooldown would block a normal show
     expect(shouldShowNotice(s, () => 0.99)).toBe(true);
+  });
+});
+
+describe("CTA in savings messages", () => {
+  it("appends the platform/learn-more CTA to the inline notice", () => {
+    const s = baseState({ totalRequests: 2, totalTokens: 1020, totalSavingsUsd: 0.01 });
+    const out = formatNotice(s);
+    expect(out).toContain("platform.zerogpu.ai");
+    expect(out).toContain("zerogpu.ai to learn more");
+  });
+
+  it("appends the CTA to the full report (with and without data)", () => {
+    const empty = formatReport(baseState());
+    expect(empty).toContain("platform.zerogpu.ai");
+    expect(empty).toContain("zerogpu.ai");
+
+    const populated = formatReport(
+      baseState({
+        totalRequests: 5,
+        totalTokens: 5000,
+        totalSavingsUsd: 0.5,
+        firstRecordedAt: "2026-06-01T00:00:00.000Z",
+        byModel: { "gliner2-base-v1": { requests: 5, savingsUsd: 0.5, tokens: 5000 } },
+      }),
+    );
+    expect(populated).toContain("platform.zerogpu.ai");
+    expect(populated).toContain("zerogpu.ai");
   });
 });
 

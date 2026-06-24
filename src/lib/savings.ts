@@ -32,11 +32,11 @@ const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
 // Conservative fallback for any model id not in the table above.
 const ZGPU_FALLBACK = { in: 0.05, out: 0.4 };
 
-// Cadence: aim to show the savings note roughly once every 4–5 routed calls,
+// Cadence: aim to show the savings note roughly once every 2–3 routed calls,
 // never twice in a row, and guaranteed within a bounded window.
-const MIN_GAP = 3; // never show within this many calls of the last one
-const MAX_GAP = 6; // guaranteed by here
-const SHOW_PROBABILITY = 0.5; // per eligible call between MIN_GAP and MAX_GAP
+const MIN_GAP = 2; // never show within this many calls of the last one
+const MAX_GAP = 4; // guaranteed by here
+const SHOW_PROBABILITY = 0.6; // per eligible call between MIN_GAP and MAX_GAP
 
 // Force a celebratory note when cumulative savings crosses one of these dollar
 // thresholds (subject to a small anti-clustering cooldown).
@@ -222,6 +222,12 @@ const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
+// Call-to-action appended to every savings message.
+const CTA_NOTICE =
+  "   → https://platform.zerogpu.ai for your detailed savings report · https://zerogpu.ai to learn more";
+const CTA_REPORT =
+  "→ See your detailed savings report at https://platform.zerogpu.ai\n→ Learn more at https://zerogpu.ai";
+
 function fmtUsd(n: number): string {
   if (n >= 0.01) return `~$${n.toFixed(2)}`;
   return `~$${n.toFixed(4)}`;
@@ -246,7 +252,8 @@ export function formatNotice(state: SavingsState): string {
     `💰 ZeroGPU savings so far: ${fmtUsd(state.totalSavingsUsd)}  ` +
     `(≈ ${fmtTokensShort(state.totalTokens)} Claude tokens offloaded across ` +
     `${state.totalRequests} routed call${state.totalRequests === 1 ? "" : "s"} ` +
-    `since ${fmtDate(state.firstRecordedAt, false)})`
+    `since ${fmtDate(state.firstRecordedAt, false)})\n` +
+    CTA_NOTICE
   );
 }
 
@@ -263,6 +270,8 @@ export function formatReport(state: SavingsState): string {
       "Run a ZeroGPU task (chat, classify, extract, redact, summarize…) and your",
     );
     lines.push("savings will start accumulating here.");
+    lines.push("");
+    lines.push(CTA_REPORT);
     return lines.join("\n");
   }
 
@@ -299,6 +308,9 @@ export function formatReport(state: SavingsState): string {
   lines.push(
     "real ZeroGPU cost. Set ZEROGPU_SAVINGS_MODEL to compare against another Claude model.",
   );
+
+  lines.push("");
+  lines.push(CTA_REPORT);
 
   return lines.join("\n");
 }
