@@ -60,7 +60,7 @@ zerogpu --help
 ## Quick Start
 
 ```bash
-# 1. Sign in (you'll be prompted for your API key and project ID)
+# 1. Sign in (you'll be prompted for your API key)
 zerogpu login
 
 # 2. Check your session
@@ -74,12 +74,12 @@ zerogpu summarize "ZeroGPU runs small, fast models at the edge so you can ship A
 
 ## Authentication
 
-Every inference command requires a valid API key **and** a project ID. You can provide them in two ways:
+Every inference command requires a valid API key. You can provide it in two ways:
 
-1. **`zerogpu login`** — stores credentials in a local config file and exports `ZEROGPU_API_KEY` to your shell profile.
-2. **Environment variable** — set `ZEROGPU_API_KEY` directly (useful for CI). The project ID still needs to be saved via `login` or supplied through the config file.
+1. **`zerogpu login`** — stores the credential in a local config file and exports `ZEROGPU_API_KEY` to your shell profile.
+2. **Environment variable** — set `ZEROGPU_API_KEY` directly (useful for CI).
 
-Get your API key (`zgpu-api-…`) and project ID (UUID) from the [ZeroGPU dashboard](https://zerogpu.ai).
+Get your API key (`zgpu-api-…`) from the [ZeroGPU dashboard](https://zerogpu.ai).
 
 ---
 
@@ -97,18 +97,16 @@ Run `zerogpu <command> --help` for command-level help.
 
 #### `login`
 
-Sign in to ZeroGPU. Prompts for your API key (masked input), validates it, and persists the credential. The project is derived from the API key; pass `--project-id` only if you want to pin a specific project.
+Sign in to ZeroGPU. Prompts for your API key (masked input), validates it, and persists the credential.
 
 ```bash
 zerogpu login
 zerogpu login --api-key zgpu-api-xxxxxxxx
-zerogpu login --api-key zgpu-api-xxxxxxxx --project-id 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a
 ```
 
 | Option | Description |
 |---|---|
 | `--api-key <key>` | Provide the API key directly (skips the prompt). |
-| `--project-id <id>` | _(optional)_ Pin a specific project ID; derived from the API key if omitted. |
 
 #### `status`
 
@@ -273,8 +271,6 @@ zerogpu redact_pii "Call Sarah at 415-555-0100 or email sarah@acme.com."
 |---|---|
 | `ZEROGPU_API_KEY` | Overrides the API key from the config file. Set automatically by `zerogpu login` for your default shell. |
 
-The project ID is read from the saved config file written during `zerogpu login`.
-
 ---
 
 ## Output
@@ -295,7 +291,6 @@ zerogpu classify_iab "Tips for first-time homebuyers." > result.json
 
 - **`You're not fully signed in yet.`** Run `zerogpu login` again, or check `zerogpu status`.
 - **`That doesn't look like a valid API key`** Keys must start with `zgpu-api-`.
-- **`That doesn't look like a valid project ID`** Project IDs must be a UUID (e.g. `4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a`).
 - **`ZEROGPU_API_KEY` not picked up in a new shell:** open a new terminal, or `source` your shell config file (the `login` command prints the path).
 - **HTTP errors** are surfaced with the response status and body — inspect them to debug request issues.
 

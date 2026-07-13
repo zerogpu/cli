@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { getApiKey, getProjectId } from "../lib/auth.js";
+import { getApiKey } from "../lib/auth.js";
 import {
   RESPONSES_ENDPOINT,
   type ResponsesApiResponse,
@@ -17,7 +17,6 @@ export function registerGenerateFollowupsCommand(program: Command): void {
     )
     .action(async (text: string) => {
       const apiKey = getApiKey();
-      const projectId = getProjectId();
 
       if (!apiKey) {
         console.error(
@@ -33,7 +32,6 @@ export function registerGenerateFollowupsCommand(program: Command): void {
           headers: {
             "content-type": "application/json",
             "x-api-key": apiKey.apiKey,
-            ...(projectId ? { "x-project-id": projectId.projectId } : {}),
           },
           body: JSON.stringify({
             model: MODEL,
