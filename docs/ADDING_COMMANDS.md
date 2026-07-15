@@ -7,7 +7,7 @@ This guide explains how to add a new CLI command to the ZeroGPU CLI.
 - `src/commands/` — one file per command, each exporting a `register<Name>Command(program)` function.
 - `src/cli.ts` — wires every command into the root program.
 - `src/lib/responses.ts` — shared `RESPONSES_ENDPOINT` and `ResponsesApiResponse` for `/v1/responses` calls.
-- `src/lib/auth.ts` — `getApiKey()` / `getProjectId()` for authenticated requests.
+- `src/lib/auth.ts` — `getApiKey()` for authenticated requests.
 
 ## Steps
 
@@ -22,19 +22,15 @@ This guide explains how to add a new CLI command to the ZeroGPU CLI.
    - Add the import alongside the other `register...` imports.
    - Call `registerXxxCommand(program)` inside `buildProgram()`.
 
-3. **Auth-gated commands** should follow this pattern. Only the API key is
-   required; the project is derived from it. Send `x-project-id` only when a
-   project ID is configured:
+3. **Auth-gated commands** should follow this pattern:
    ```ts
    const apiKey = getApiKey();
-   const projectId = getProjectId(); // optional
    if (!apiKey) {
      console.error("You're not fully signed in yet. Run 'zerogpu login' ...");
      process.exit(1);
    }
    // headers:
    //   "x-api-key": apiKey.apiKey,
-   //   ...(projectId ? { "x-project-id": projectId.projectId } : {}),
    ```
 
 4. **Error handling**:

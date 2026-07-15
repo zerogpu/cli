@@ -22,7 +22,7 @@ It is written in TypeScript (ESM, Node ≥ 20), built on [`commander`](https://g
 ### Prerequisites
 - **Node.js ≥ 20**
 - An NPM-compatible package manager (`npm`, `pnpm`, or `yarn`)
-- A ZeroGPU **API key** (format: `zgpu-api-…`) and **Project ID** (UUID)
+- A ZeroGPU **API key** (format: `zgpu-api-…`)
 
 ### Install globally (recommended)
 ```bash
@@ -75,10 +75,9 @@ Credentials are persisted to a local config file and `ZEROGPU_API_KEY` is added 
 | Variable | Purpose |
 |---|---|
 | `ZEROGPU_API_KEY` | API key. Used as fallback if no config file is present. Written by `zerogpu login`. |
-| `ZEROGPU_PROJECT_ID` | _(optional)_ Project ID. Used as fallback if no config file is present. The backend derives the project from the API key, so this is only needed to pin a specific project. |
 
 ### Resolution order
-For every request the CLI resolves credentials by checking the **config file first**, then the corresponding **environment variable**. If the API key is missing, the command exits with code `1` and prompts you to run `zerogpu login`. The project ID is optional and sent (as `x-project-id`) only when present.
+For every request the CLI resolves the API key by checking the **config file first**, then the `ZEROGPU_API_KEY` **environment variable**. If the API key is missing, the command exits with code `1` and prompts you to run `zerogpu login`.
 
 ---
 
@@ -88,7 +87,7 @@ The CLI exposes the following commands:
 
 | Command | Purpose |
 |---|---|
-| [`login`](#41-login) | Sign in and persist API key + Project ID |
+| [`login`](#41-login) | Sign in and persist API key |
 | [`status`](#42-status) | Show current sign-in status |
 | [`chat`](#43-chat) | Chat with `LFM2.5-1.2B-Instruct` |
 | [`chat_thinking`](#44-chat_thinking) | Chat with the Thinking variant (returns reasoning) |
@@ -120,7 +119,7 @@ Sign in to ZeroGPU and persist your credentials.
 
 **Synopsis**
 ```
-zerogpu login [--api-key <key>] [--project-id <id>]
+zerogpu login [--api-key <key>]
 ```
 
 **Parameters**
@@ -128,7 +127,6 @@ zerogpu login [--api-key <key>] [--project-id <id>]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--api-key <key>` | string | optional | Provide the API key non-interactively. Must start with `zgpu-api-`. If omitted, the CLI shows a masked prompt. |
-| `--project-id <id>` | string (UUID) | optional | Pin a specific Project ID. Must be a valid UUID v4 string. If omitted, the project is derived from the API key (the CLI does not prompt for it). |
 
 **Examples**
 ```bash
@@ -136,18 +134,15 @@ zerogpu login [--api-key <key>] [--project-id <id>]
 zerogpu login
 
 # Non-interactive (e.g., CI)
-zerogpu login \
-  --api-key zgpu-api-XXXXXXXXXXXXXXXXXX \
-  --project-id 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a
+zerogpu login --api-key zgpu-api-XXXXXXXXXXXXXXXXXX
 ```
 
 **Outcomes**
 
 | Outcome | Exit | Side effects |
 |---|---|---|
-| Success | `0` | API key + project ID written to config file; `ZEROGPU_API_KEY` upserted into shell profile or Windows env; success message printed. |
+| Success | `0` | API key written to config file; `ZEROGPU_API_KEY` upserted into shell profile or Windows env; success message printed. |
 | Invalid / empty API key | `1` | Nothing written. stderr explains the `zgpu-api-` prefix requirement. |
-| Invalid / non-UUID project ID | `1` | Nothing written. stderr shows expected UUID format. |
 | User cancels prompt (Ctrl-C / EOF) | `1` | "Login cancelled. No changes were made." |
 
 **Expected stdout (success)**
@@ -624,7 +619,6 @@ All inference commands POST to:
 POST https://api.zerogpu.ai/v1/responses
 Content-Type: application/json
 x-api-key:    <ZEROGPU_API_KEY>
-x-project-id: <ZEROGPU_PROJECT_ID>   # optional; sent only when a project is configured
 ```
 
 The request body is:
@@ -663,9 +657,8 @@ It picks the first `content` entry whose `type === "output_text"` (falling back 
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `You're not fully signed in yet.` | Missing config + missing env var | Run `zerogpu login`, or export `ZEROGPU_API_KEY` (`ZEROGPU_PROJECT_ID` is optional). |
+| `You're not fully signed in yet.` | Missing config + missing env var | Run `zerogpu login`, or export `ZEROGPU_API_KEY`. |
 | `That doesn't look like a valid API key` | Key doesn't start with `zgpu-api-` | Copy the full key from the ZeroGPU console. |
-| `Project ID must be a UUID.` | Pasted a name/slug | Use the UUID shown next to the project in the console. |
-| `Request failed with status 401` | Bad/revoked key or wrong project | Re-run `zerogpu login`. |
+| `Request failed with status 401` | Bad/revoked key | Re-run `zerogpu login`. |
 | `Request failed with status 429` | Rate limited | Back off and retry. |
 | `Response did not contain any …` | Upstream returned unexpected shape | Re-run; if persistent, file an issue with the dumped JSON. |

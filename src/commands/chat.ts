@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { getApiKey, getProjectId } from "../lib/auth.js";
+import { getApiKey } from "../lib/auth.js";
 import {
   RESPONSES_ENDPOINT,
   type ResponsesApiResponse,
@@ -19,7 +19,6 @@ export function registerChatCommand(program: Command): void {
     .action(
       async (text: string, opts: { instructions?: string }) => {
         const apiKey = getApiKey();
-        const projectId = getProjectId();
 
         if (!apiKey) {
           console.error(
@@ -41,7 +40,6 @@ export function registerChatCommand(program: Command): void {
             headers: {
               "content-type": "application/json",
               "x-api-key": apiKey.apiKey,
-              ...(projectId ? { "x-project-id": projectId.projectId } : {}),
             },
             body: JSON.stringify(body),
           });

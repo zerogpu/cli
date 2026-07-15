@@ -1,13 +1,12 @@
 import { spawn } from "node:child_process";
 import { Command } from "commander";
-import { validateApiKey, validateProjectId } from "../lib/auth.js";
+import { validateApiKey } from "../lib/auth.js";
 import { writeConfig, readConfig } from "../lib/config.js";
 import { promptMasked } from "../lib/prompt.js";
 import { upsertEnvExport } from "../lib/shellEnv.js";
 
 interface LoginOptions {
   apiKey?: string;
-  projectId?: string;
 }
 
 const DASHBOARD_URL = "https://platform.zerogpu.ai/dashboard";
@@ -47,13 +46,8 @@ export function registerLoginCommand(program: Command): void {
     .command("login")
     .description("Sign in to ZeroGPU with your API key.")
     .option("--api-key <key>", "Provide your API key directly (skips the prompt).")
-    .option(
-      "--project-id <id>",
-      "Optionally pin a ZeroGPU project ID. If omitted, the project is derived from your API key.",
-    )
     .action(async (options: LoginOptions) => {
       let rawKey = options.apiKey;
-      const rawProjectId = options.projectId;
 
       if (!rawKey) {
         const opened = await openBrowser(DASHBOARD_URL);
@@ -84,33 +78,8 @@ export function registerLoginCommand(program: Command): void {
         process.exit(1);
       }
 
-      // Project ID is optional — the backend derives the project from the API key.
-      // Validate and store it only when the caller explicitly provided one.
-      let projectId: string | undefined;
-      if (rawProjectId) {
-        const projectResult = validateProjectId(rawProjectId);
-        if (!projectResult.ok) {
-          console.error(
-            `That doesn't look like a valid project ID — ${projectResult.reason}`,
-          );
-          console.error(
-            "It should be a UUID like 4ed3e5bb-c2ed-4d4a-8a66-2b161a27fd1a. Please try again.",
-          );
-          process.exit(1);
-        }
-        projectId = projectResult.key;
-      }
-
       const existing = readConfig();
-      // Re-login clears any previously pinned project ID; it is restored only
-      // when --project-id is passed this run, so login without it returns to the
-      // unpinned (derive-from-key) state.
       const next = { ...existing, apiKey: result.key };
-      if (projectId) {
-        next.projectId = projectId;
-      } else {
-        delete next.projectId;
-      }
       writeConfig(next);
 
       const env = upsertEnvExport("ZEROGPU_API_KEY", result.key);
