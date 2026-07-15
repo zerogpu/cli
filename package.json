@@ -1,6 +1,6 @@
 {
   "name": "zerogpu-cli",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "Command-line interface for ZeroGPU.",
   "type": "module",
   "bin": {
