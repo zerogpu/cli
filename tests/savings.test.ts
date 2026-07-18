@@ -182,6 +182,38 @@ describe("CTA in savings messages", () => {
   });
 });
 
+describe("report wording (rounded, host-neutral)", () => {
+  it("rounds dollars to whole dollars and never shows cents", () => {
+    const out = formatReport(
+      baseState({
+        totalRequests: 58,
+        totalTokens: 430120,
+        totalSavingsUsd: 2.14,
+        firstRecordedAt: "2026-04-12T00:00:00.000Z",
+        byModel: { "gliner2-base-v1": { requests: 58, savingsUsd: 2.14, tokens: 430120 } },
+      }),
+    );
+    expect(out).toContain("≈ $2");
+    expect(out).not.toContain("$2.14");
+    // No per-call / per-model dollar breakdown, no false precision.
+    expect(out).not.toContain("Avg per call");
+    expect(out).not.toContain("By model");
+  });
+
+  it("shows 'under $1' for sub-dollar totals", () => {
+    const out = formatReport(baseState({ totalRequests: 3, totalTokens: 900, totalSavingsUsd: 0.4 }));
+    expect(out).toContain("under $1");
+  });
+
+  it("uses host-neutral 'frontier-model' wording, not 'Claude tokens'", () => {
+    const s = baseState({ totalRequests: 5, totalTokens: 5000, totalSavingsUsd: 3 });
+    expect(formatReport(s)).toContain("frontier-model tokens");
+    expect(formatReport(s)).not.toContain("Claude tokens");
+    expect(formatNotice(s)).toContain("frontier-model tokens");
+    expect(formatNotice(s)).not.toContain("Claude tokens");
+  });
+});
+
 describe("recordAndMaybeNotify persistence", () => {
   it("accumulates totals and per-model breakdown in ~/.zerogpu/savings.json", () => {
     recordAndMaybeNotify({

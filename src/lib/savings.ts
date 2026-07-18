@@ -228,9 +228,11 @@ const CTA_NOTICE =
 const CTA_REPORT =
   "→ See your detailed savings report at https://platform.zerogpu.ai\n→ Learn more at https://zerogpu.ai";
 
+// Deliberately coarse: the dollar figure is an estimate (it assumes a baseline
+// model), so we round to whole dollars and never imply cent-level precision.
 function fmtUsd(n: number): string {
-  if (n >= 0.01) return `~$${n.toFixed(2)}`;
-  return `~$${n.toFixed(4)}`;
+  if (n >= 1) return `≈ $${Math.round(n)}`;
+  return "under $1";
 }
 
 function fmtTokensShort(n: number): string {
@@ -250,7 +252,7 @@ function fmtDate(iso: string | null, withYear: boolean): string {
 export function formatNotice(state: SavingsState): string {
   return (
     `💰 ZeroGPU savings so far: ${fmtUsd(state.totalSavingsUsd)}  ` +
-    `(≈ ${fmtTokensShort(state.totalTokens)} Claude tokens offloaded across ` +
+    `(≈ ${fmtTokensShort(state.totalTokens)} frontier-model tokens offloaded across ` +
     `${state.totalRequests} routed call${state.totalRequests === 1 ? "" : "s"} ` +
     `since ${fmtDate(state.firstRecordedAt, false)})\n` +
     CTA_NOTICE
@@ -275,39 +277,24 @@ export function formatReport(state: SavingsState): string {
     return lines.join("\n");
   }
 
-  const avg = state.totalSavingsUsd / state.totalRequests;
-  lines.push(`Saved so far:     ${fmtUsd(state.totalSavingsUsd)}`);
+  lines.push(`Saved so far:     ${fmtUsd(state.totalSavingsUsd)}  (vs baseline ${baseline})`);
   lines.push(
-    `Tokens offloaded: ≈ ${state.totalTokens.toLocaleString("en-US")} Claude tokens`,
+    `Tokens offloaded: ≈ ${state.totalTokens.toLocaleString("en-US")} frontier-model tokens`,
   );
   lines.push(`Routed calls:     ${state.totalRequests}`);
-  lines.push(`Avg per call:     ${fmtUsd(avg)}`);
   lines.push(`Since:            ${fmtDate(state.firstRecordedAt, true)}`);
-
-  const models = Object.entries(state.byModel).sort(
-    (a, b) => b[1].savingsUsd - a[1].savingsUsd,
-  );
-  if (models.length > 0) {
-    lines.push("");
-    lines.push("By model:");
-    for (const [name, m] of models) {
-      lines.push(
-        `  ${name}  —  ${m.requests} call${m.requests === 1 ? "" : "s"}, ` +
-          `${fmtUsd(m.savingsUsd)}, ${fmtTokensShort(m.tokens)} tok`,
-      );
-    }
-  }
 
   lines.push("");
   lines.push(
-    "Token counts and ZeroGPU costs are actual. Dollar savings estimate the Claude",
+    "Token counts are actual (from the API). The dollar figure is a rounded",
   );
   lines.push(
-    `spend avoided: what these exact tokens would have cost on ${baseline}, minus the`,
+    `estimate of the frontier-model spend avoided — what these exact tokens would`,
   );
   lines.push(
-    "real ZeroGPU cost. Set ZEROGPU_SAVINGS_MODEL to compare against another Claude model.",
+    `have cost on ${baseline}, minus the real ZeroGPU cost. Set ZEROGPU_SAVINGS_MODEL`,
   );
+  lines.push("to compare against another baseline model.");
 
   lines.push("");
   lines.push(CTA_REPORT);

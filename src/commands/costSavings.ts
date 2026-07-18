@@ -6,7 +6,7 @@ export function registerCostSavingsCommand(program: Command): void {
     .command("cost_savings")
     .alias("cost-savings")
     .description(
-      "Show how much you've saved by routing tasks to ZeroGPU instead of Claude.",
+      "Show how much you've saved by routing tasks to ZeroGPU instead of your frontier model.",
     )
     .option("--json", "Output the raw savings data as JSON.")
     .option("--reset", "Clear all recorded savings and start over.")
