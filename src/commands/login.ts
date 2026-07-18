@@ -85,23 +85,18 @@ export function registerLoginCommand(program: Command): void {
       const env = upsertEnvExport("ZEROGPU_API_KEY", result.key);
       process.env["ZEROGPU_API_KEY"] = result.key;
 
-      console.log("You're logged in. Your API key has been saved.");
+      console.log(
+        "You're all set. Your API key is saved and the ZeroGPU CLI is ready to go — try 'zerogpu status'.",
+      );
       if (env.shell === "windows") {
         console.log(
           env.note ??
-            "We also tried to save it as an environment variable for other tools.",
-        );
-        console.log(
-          "Tip: open a new terminal window so other programs can see ZEROGPU_API_KEY.",
+            "We also saved it as an environment variable so your other tools can use it.",
         );
       } else {
         console.log(
-          `We also added ZEROGPU_API_KEY to your shell config (${env.path}) so other tools can use it.`,
+          `We also added ZEROGPU_API_KEY to your shell config (${env.path}) so your other tools can use it.`,
         );
-        console.log(
-          `To use it right away in this terminal, run:  source ${env.path}`,
-        );
-        console.log("Or just open a new terminal window — it'll be there automatically.");
       }
     });
 }
