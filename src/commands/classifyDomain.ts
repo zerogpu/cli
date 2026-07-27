@@ -2,20 +2,21 @@ import { Command } from "commander";
 import { getApiKey } from "../lib/auth.js";
 import {
   RESPONSES_ENDPOINT,
+  extractOutputText,
   type ResponsesApiResponse,
 } from "../lib/responses.js";
 import { recordAndMaybeNotify } from "../lib/savings.js";
 
-const MODEL = "zlm-v2-iab-classify-edge-enriched";
+const MODEL = "zlm-v1-iab-domain-classifier";
 
-export function registerClassifyIabEnrichedCommand(program: Command): void {
+export function registerClassifyDomainCommand(program: Command): void {
   program
-    .command("classify_iab_enriched <text>")
-    .alias("classify-iab-enriched")
+    .command("classify_domain <domain>")
+    .alias("classify-domain")
     .description(
-      "Classify text with the IAB enriched edge model (audience, topics, keywords, intent).",
+      "Classify a domain name with the IAB domain edge model (content, topics, keywords, intent).",
     )
-    .action(async (text: string) => {
+    .action(async (domain: string) => {
       const apiKey = getApiKey();
 
       if (!apiKey) {
@@ -35,7 +36,7 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
           },
           body: JSON.stringify({
             model: MODEL,
-            input: text,
+            input: domain,
           }),
         });
       } catch (err) {
@@ -52,9 +53,7 @@ export function registerClassifyIabEnrichedCommand(program: Command): void {
       }
 
       const data = (await response.json()) as ResponsesApiResponse;
-      const content = data.output?.[0]?.content?.find(
-        (c) => c.type === "output_text",
-      )?.text ?? data.output?.[0]?.content?.[0]?.text;
+      const content = extractOutputText(data);
       if (!content) {
         console.error("Response did not contain any classification content.");
         console.error(JSON.stringify(data, null, 2));

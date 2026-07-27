@@ -5,6 +5,7 @@ import { Command } from "commander";
 import updateNotifier from "update-notifier";
 import { registerChatCommand } from "./commands/chat.js";
 import { registerChatThinkingCommand } from "./commands/chatThinking.js";
+import { registerClassifyDomainCommand } from "./commands/classifyDomain.js";
 import { registerClassifyIabCommand } from "./commands/classifyIab.js";
 import { registerClassifyIabEnrichedCommand } from "./commands/classifyIabEnriched.js";
 import { registerClassifyStructuredCommand } from "./commands/classifyStructured.js";
@@ -95,6 +96,7 @@ export function buildProgram(): Command {
   registerStatusCommand(program);
   registerClassifyIabCommand(program);
   registerClassifyIabEnrichedCommand(program);
+  registerClassifyDomainCommand(program);
   registerClassifyStructuredCommand(program);
   registerClassifyZeroShotCommand(program);
   registerGenerateFollowupsCommand(program);

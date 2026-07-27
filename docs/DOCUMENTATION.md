@@ -2,10 +2,12 @@
 
 ## 1. Project Description
 
-`zerogpu-cli` is the official command-line interface for [ZeroGPU](https://zerogpu.ai), a distributed / edge inference platform for small language models (SLMs) and nano language models. The CLI is a thin, OpenAI-compatible client around the ZeroGPU **Responses API** (`https://api.zerogpu.ai/v1/responses`) that lets you call a curated set of edge-optimized models directly from your terminal for common NLP workloads:
+`zerogpu-cli` is the official command-line interface for [ZeroGPU](https://zerogpu.ai), a distributed / edge inference platform for small language models (SLMs) and nano language models. The CLI is a thin, OpenAI-compatible client around the ZeroGPU **Responses API** (`https://api.zerogpu.ai/v1/responses`) — and, for models served only there, the **Chat Completions API** (`https://api.zerogpu.ai/v1/chat/completions`) — that lets you call a curated set of edge-optimized models directly from your terminal for common NLP workloads:
 
 - Conversational chat (`LFM2.5-1.2B-Instruct`, `LFM2.5-1.2B-Thinking`)
-- IAB content/audience classification (`zlm-v1-iab-classify-edge`, `…-enriched`)
+- Reasoning and tool-use chat (`gpt-oss-120b`, `qwen3-30b-a3b-fp8`)
+- IAB content/audience classification (`zlm-v1-iab-classify-edge`, `zlm-v2-iab-classify-edge-enriched`)
+- Domain-level IAB classification (`zlm-v1-iab-domain-classifier`)
 - Zero-shot classification (`deberta-v3-small`)
 - Structured / schema-driven classification and JSON extraction (`gliner2-base-v1`)
 - Named-entity recognition with custom labels (`gliner2-base-v1`)
@@ -89,7 +91,7 @@ The CLI exposes the following commands:
 |---|---|
 | [`login`](#41-login) | Sign in and persist API key |
 | [`status`](#42-status) | Show current sign-in status |
-| [`chat`](#43-chat) | Chat with `LFM2.5-1.2B-Instruct` |
+| [`chat`](#43-chat) | Chat with a text-generation model (default `LFM2.5-1.2B-Instruct`) |
 | [`chat_thinking`](#44-chat_thinking) | Chat with the Thinking variant (returns reasoning) |
 | [`classify_iab`](#45-classify_iab) | IAB taxonomy classification |
 | [`classify_iab_enriched`](#46-classify_iab_enriched) | IAB enriched (topics / keywords / intent) |
@@ -101,6 +103,7 @@ The CLI exposes the following commands:
 | [`extract_json`](#412-extract_json) | Schema-driven structured JSON extraction |
 | [`summarize`](#413-summarize) | Summarize text with `llama-3.1-8b-instruct-fast` |
 | [`generate_followups`](#414-generate_followups) | Generate follow-up questions |
+| [`classify_domain`](#415-classify_domain) | Domain-level IAB classification |
 
 ### Common exit codes
 | Code | Meaning |
@@ -182,11 +185,11 @@ zerogpu status
 
 ### 4.3 `chat`
 
-Chat with the `LFM2.5-1.2B-Instruct` model.
+Chat with a ZeroGPU text-generation model. Defaults to `LFM2.5-1.2B-Instruct`.
 
 **Synopsis**
 ```
-zerogpu chat <text> [-i <instructions>]
+zerogpu chat <text> [-i <instructions>] [-m <model>] [-r]
 ```
 
 **Parameters**
@@ -195,11 +198,26 @@ zerogpu chat <text> [-i <instructions>]
 |---|---|---|---|
 | `text` (positional) | string | yes | The user message / prompt to send. |
 | `-i`, `--instructions <instructions>` | string | optional | System instructions that steer the assistant's behavior. |
+| `-m`, `--model <model>` | string | optional | Model to use. Default `LFM2.5-1.2B-Instruct`. Matched case-insensitively; an unknown id exits `1` and lists the valid ones. |
+| `-r`, `--reasoning` | boolean | optional | Also print the reasoning trace, for models that return one. Ignored when the model returns none. |
+
+**Models**
+
+| Model | API | Notes |
+|---|---|---|
+| `LFM2.5-1.2B-Instruct` | Responses | Default. Fast edge chat. |
+| `LFM2.5-1.2B-Thinking` | Responses | Compact reasoning model. |
+| `gpt-oss-120b` | Responses | 117B MoE, 131K context, reasoning + function calling. |
+| `qwen3-30b-a3b-fp8` | Chat Completions | 30.5B MoE, 100+ languages, reasoning + function calling. |
+
+`qwen3-30b-a3b-fp8` has no Responses endpoint, so the CLI posts it to `/v1/chat/completions` instead, mapping `--instructions` to a `system` message and normalizing `prompt_tokens` / `completion_tokens` back to Responses token names for savings tracking. This routing is transparent — the command and its output are identical either way.
 
 **Example**
 ```bash
 zerogpu chat "Explain WebSockets in two sentences." \
   -i "You are a concise technical writer."
+
+zerogpu chat "Why is my p99 latency spiking?" -m gpt-oss-120b -r
 ```
 
 **Expected output**
@@ -281,7 +299,7 @@ zerogpu classify_iab "The Lakers signed a new point guard ahead of the playoffs.
 
 ### 4.6 `classify_iab_enriched`
 
-Classify text with the **enriched** IAB edge model (`zlm-v1-iab-classify-edge-enriched`) — returns audience categories plus topics, keywords, and inferred intent.
+Classify text with the **enriched** IAB edge model (`zlm-v2-iab-classify-edge-enriched`) — returns audience categories plus topics, keywords, and inferred intent.
 
 **Synopsis**
 ```
@@ -611,12 +629,61 @@ zerogpu generate_followups \
 
 ---
 
+### 4.15 `classify_domain`
+
+Classify a domain name against the IAB taxonomy using `zlm-v1-iab-domain-classifier`. It infers the categories that characterize a site as a whole from the hostname alone — no crawl, no page text — which keeps payloads roughly 10x smaller than page-level classification. Use it for bidstream enrichment, allow/deny-list scoring, and inventory-level targeting; when you have the page text and need per-URL precision, use [`classify_iab`](#45-classify_iab) instead.
+
+**Synopsis**
+```
+zerogpu classify_domain <domain>
+```
+
+**Parameters**
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `domain` (positional) | string | yes | Bare domain name to classify, e.g. `nytimes.com`. |
+
+**Example**
+```bash
+zerogpu classify_domain nytimes.com
+```
+
+**Expected output (illustrative)**
+```json
+{
+  "content": {
+    "iab_1_0": [{ "code": "IAB12", "name": "News", "score": 0.8124 }],
+    "iab_2_2": [{ "name": "News and Politics", "score": 0.8124 }]
+  },
+  "topics": [{ "name": "news", "score": 0.8124 }],
+  "keywords": ["news", "politics", "world", "business"],
+  "user_intent": {
+    "name": "reading news and current events",
+    "category": "informational",
+    "score": 0.5
+  }
+}
+```
+
+**Outcomes** — same as the common table.
+
+---
+
 ## 5. Network & API Contract
 
 All inference commands POST to:
 
 ```
 POST https://api.zerogpu.ai/v1/responses
+Content-Type: application/json
+x-api-key:    <ZEROGPU_API_KEY>
+```
+
+The one exception is `chat --model qwen3-30b-a3b-fp8`, which the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
+
+```
+POST https://api.zerogpu.ai/v1/chat/completions
 Content-Type: application/json
 x-api-key:    <ZEROGPU_API_KEY>
 ```
@@ -635,11 +702,14 @@ The CLI parses the response as:
 ```ts
 interface ResponsesApiResponse {
   output?: Array<{
+    type?: string;
     content?: Array<{ type?: string; text?: string }>;
   }>;
 }
 ```
 It picks the first `content` entry whose `type === "output_text"` (falling back to `content[0]`), then prints `text` — pretty-printed if it parses as JSON, otherwise as a raw string.
+
+Reasoning models emit a `reasoning` output item **ahead of** the assistant message, so `chat` selects the item whose `type === "message"` rather than assuming `output[0]`, and reads the trace from the `reasoning` item when `--reasoning` is passed. On the Chat Completions path the answer is `choices[0].message.content` and the trace is `choices[0].message.reasoning`.
 
 ---
 
