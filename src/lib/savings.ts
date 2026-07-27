@@ -19,18 +19,22 @@ const DEFAULT_BASELINE = "claude-opus-4-8";
 // Actual ZeroGPU pricing per 1M tokens (in / out), per model.
 // Source: https://docs.zerogpu.ai model catalog.
 const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
+  "gpt-oss-120b": { in: 0.03, out: 0.1 },
+  "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
   "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
-  "zlm-v1-iab-classify-edge": { in: 0.05, out: 0.4 },
-  "zlm-v1-iab-classify-edge-enriched": { in: 0.05, out: 0.4 },
-  "zlm-v1-followup-questions-edge": { in: 0.05, out: 0.4 },
-  "gliner-multi-pii-v1": { in: 0.05, out: 0.4 },
-  "gliner2-base-v1": { in: 0.05, out: 0.4 },
-  "deberta-v3-small": { in: 0.04, out: 0.1 },
-  "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.1 },
-  "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.1 },
+  "zlm-v1-iab-classify-edge": { in: 0.02, out: 0.05 },
+  "zlm-v2-iab-classify-edge-enriched": { in: 0.02, out: 0.05 },
+  "zlm-v1-iab-domain-classifier": { in: 0.02, out: 0.05 },
+  "zlm-v1-followup-questions-edge": { in: 0.02, out: 0.05 },
+  "gliner-multi-pii-v1": { in: 0.02, out: 0.05 },
+  "gliner2-base-v1": { in: 0.02, out: 0.05 },
+  "deberta-v3-small": { in: 0.02, out: 0.05 },
+  "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
+  "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
 };
-// Conservative fallback for any model id not in the table above.
-const ZGPU_FALLBACK = { in: 0.05, out: 0.4 };
+// Conservative fallback for any model id not in the table above: the priciest
+// published rate, so an unlisted model never overstates savings.
+const ZGPU_FALLBACK = { in: 0.05, out: 0.3 };
 
 // Cadence: aim to show the savings note roughly once every 2–3 routed calls,
 // never twice in a row, and guaranteed within a bounded window.

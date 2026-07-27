@@ -1,23 +1,73 @@
 import { Command } from "commander";
 import { getApiKey } from "../lib/auth.js";
 import {
+  CHAT_COMPLETIONS_ENDPOINT,
+  toResponsesUsage,
+  type ChatCompletionsApiResponse,
+} from "../lib/chatCompletions.js";
+import {
   RESPONSES_ENDPOINT,
+  extractOutputText,
+  extractReasoningText,
   type ResponsesApiResponse,
+  type ResponsesUsage,
 } from "../lib/responses.js";
 import { recordAndMaybeNotify } from "../lib/savings.js";
 
-const MODEL = "LFM2.5-1.2B-Instruct";
+const DEFAULT_MODEL = "LFM2.5-1.2B-Instruct";
+
+// Text-generation models `--model` accepts, and the API each one speaks.
+// qwen3-30b-a3b-fp8 is Chat Completions only — it has no Responses endpoint.
+// Source: https://docs.zerogpu.ai/docs/text-generation
+const CHAT_MODELS: Record<string, "responses" | "chat-completions"> = {
+  "LFM2.5-1.2B-Instruct": "responses",
+  "LFM2.5-1.2B-Thinking": "responses",
+  "gpt-oss-120b": "responses",
+  "qwen3-30b-a3b-fp8": "chat-completions",
+};
+
+// Model ids are case-sensitive to the API but not to the person typing them.
+function resolveModel(name: string): string | undefined {
+  return Object.keys(CHAT_MODELS).find(
+    (id) => id.toLowerCase() === name.toLowerCase(),
+  );
+}
 
 export function registerChatCommand(program: Command): void {
   program
     .command("chat <text>")
-    .description("Chat with the LFM2.5 instruct model.")
+    .description(
+      `Chat with a ZeroGPU text-generation model (default ${DEFAULT_MODEL}).`,
+    )
     .option(
       "-i, --instructions <instructions>",
       "System instructions that steer the assistant's behavior.",
     )
+    .option(
+      "-m, --model <model>",
+      `Model to use: ${Object.keys(CHAT_MODELS).join(", ")}.`,
+      DEFAULT_MODEL,
+    )
+    .option(
+      "-r, --reasoning",
+      "Also print the reasoning trace, for models that return one.",
+    )
     .action(
-      async (text: string, opts: { instructions?: string }) => {
+      async (
+        text: string,
+        opts: { instructions?: string; model: string; reasoning?: boolean },
+      ) => {
+        const model = resolveModel(opts.model);
+
+        if (!model) {
+          console.error(
+            `Unknown model '${opts.model}'. Available models: ${Object.keys(
+              CHAT_MODELS,
+            ).join(", ")}.`,
+          );
+          process.exit(1);
+        }
+
         const apiKey = getApiKey();
 
         if (!apiKey) {
@@ -27,22 +77,36 @@ export function registerChatCommand(program: Command): void {
           process.exit(1);
         }
 
-        const body: Record<string, unknown> = {
-          model: MODEL,
-          input: text,
-        };
-        if (opts.instructions) body.instructions = opts.instructions;
+        const useChatCompletions = CHAT_MODELS[model] === "chat-completions";
+
+        const body: Record<string, unknown> = useChatCompletions
+          ? {
+              model,
+              messages: [
+                ...(opts.instructions
+                  ? [{ role: "system", content: opts.instructions }]
+                  : []),
+                { role: "user", content: text },
+              ],
+            }
+          : { model, input: text };
+        if (!useChatCompletions && opts.instructions) {
+          body.instructions = opts.instructions;
+        }
 
         let response: Response;
         try {
-          response = await fetch(RESPONSES_ENDPOINT, {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              "x-api-key": apiKey.apiKey,
+          response = await fetch(
+            useChatCompletions ? CHAT_COMPLETIONS_ENDPOINT : RESPONSES_ENDPOINT,
+            {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "x-api-key": apiKey.apiKey,
+              },
+              body: JSON.stringify(body),
             },
-            body: JSON.stringify(body),
-          });
+          );
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           console.error(`Request failed: ${message}`);
@@ -56,14 +120,33 @@ export function registerChatCommand(program: Command): void {
           process.exit(1);
         }
 
-        const data = (await response.json()) as ResponsesApiResponse;
-        const content = data.output?.[0]?.content?.find(
-          (c) => c.type === "output_text",
-        )?.text ?? data.output?.[0]?.content?.[0]?.text;
+        const payload: unknown = await response.json();
+
+        let content: string | undefined;
+        let reasoning: string | undefined;
+        let usage: ResponsesUsage | undefined;
+
+        if (useChatCompletions) {
+          const data = payload as ChatCompletionsApiResponse;
+          const message = data.choices?.[0]?.message;
+          content = message?.content;
+          reasoning = message?.reasoning;
+          usage = toResponsesUsage(data.usage);
+        } else {
+          const data = payload as ResponsesApiResponse;
+          content = extractOutputText(data);
+          reasoning = extractReasoningText(data);
+          usage = data.usage;
+        }
+
         if (!content) {
           console.error("Response did not contain any chat content.");
-          console.error(JSON.stringify(data, null, 2));
+          console.error(JSON.stringify(payload, null, 2));
           process.exit(1);
+        }
+
+        if (opts.reasoning && reasoning) {
+          console.log(`Reasoning:\n${reasoning}\n`);
         }
 
         try {
@@ -73,7 +156,7 @@ export function registerChatCommand(program: Command): void {
           console.log(content);
         }
 
-        recordAndMaybeNotify({ model: MODEL, usage: data.usage });
+        recordAndMaybeNotify({ model, usage });
       },
     );
 }

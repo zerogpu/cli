@@ -25,6 +25,7 @@ The official command-line interface for [ZeroGPU](https://zerogpu.ai) — run fa
   - [Classification](#classification)
     - [`classify_iab`](#classify_iab)
     - [`classify_iab_enriched`](#classify_iab_enriched)
+    - [`classify_domain`](#classify_domain)
     - [`classify_structured`](#classify_structured)
     - [`classify_zero_shot`](#classify_zero_shot)
   - [Extraction](#extraction)
@@ -122,16 +123,33 @@ zerogpu status
 
 #### `chat`
 
-Chat with the **LFM2.5-1.2B-Instruct** model.
+Chat with a ZeroGPU text-generation model. Defaults to **LFM2.5-1.2B-Instruct**; use `--model` to reach for a larger reasoning model.
 
 ```bash
 zerogpu chat "Explain edge inference in one sentence."
 zerogpu chat "Translate to French: Good morning." -i "You are a precise translator."
+
+# Frontier-grade reasoning, with the trace printed alongside the answer
+zerogpu chat "Why does my API keep getting rate-limited?" -m gpt-oss-120b -r
+
+# Multilingual reasoning
+zerogpu chat "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
 ```
 
 | Option | Description |
 |---|---|
 | `-i, --instructions <text>` | System instructions that steer the assistant's behavior. |
+| `-m, --model <model>` | Model to use (default `LFM2.5-1.2B-Instruct`). |
+| `-r, --reasoning` | Also print the reasoning trace, for models that return one. |
+
+| Model | Notes |
+|---|---|
+| `LFM2.5-1.2B-Instruct` | Default. Fast edge chat. |
+| `LFM2.5-1.2B-Thinking` | Compact reasoning model. |
+| `gpt-oss-120b` | 117B MoE, 131K context, reasoning + function calling. |
+| `qwen3-30b-a3b-fp8` | 30.5B MoE, 100+ languages, reasoning + function calling. |
+
+`qwen3-30b-a3b-fp8` is served by the Chat Completions API rather than the Responses API; the CLI routes it automatically.
 
 #### `chat_thinking`
 
@@ -176,6 +194,16 @@ Same as `classify_iab` but returns enriched output: audience, topics, keywords, 
 ```bash
 zerogpu classify_iab_enriched "Best running shoes for marathon training."
 ```
+
+#### `classify_domain`
+
+Classify a **domain name** against the IAB taxonomy using the ZeroGPU domain edge model. Takes only the hostname — no page fetch or body text — so it suits bidstream enrichment and inventory-level targeting.
+
+```bash
+zerogpu classify_domain nytimes.com
+```
+
+Returns scored content categories plus topics, keywords, and inferred user intent for the domain. When you have the page text and need per-URL precision, use `classify_iab` instead.
 
 #### `classify_structured`
 

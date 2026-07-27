@@ -60,14 +60,14 @@ describe("computeCallSavings", () => {
     const sonnet = computeCallSavings(740, 280, "claude-sonnet-4-6", "gliner2-base-v1").savingsUsd;
     expect(sonnet).toBeLessThan(opus);
     const claude = (740 * 3 + 280 * 15) / 1e6; // Sonnet: 0.00642
-    const zgpu = (740 * 0.05 + 280 * 0.4) / 1e6; // gliner2 real cost
+    const zgpu = (740 * 0.02 + 280 * 0.05) / 1e6; // gliner2 real cost
     expect(sonnet).toBeCloseTo(claude - zgpu, 8);
   });
 
   it("uses the per-model ZeroGPU rate (different models, different cost)", () => {
     // Same Claude baseline + same tokens, but a pricier ZeroGPU model → smaller savings.
     const cheap = computeCallSavings(740, 280, "claude-opus-4-8", "LFM2.5-1.2B-Instruct").savingsUsd;
-    const pricier = computeCallSavings(740, 280, "claude-opus-4-8", "gliner2-base-v1").savingsUsd;
+    const pricier = computeCallSavings(740, 280, "claude-opus-4-8", "qwen3-30b-a3b-fp8").savingsUsd;
     expect(cheap).toBeGreaterThan(pricier);
   });
 
@@ -78,9 +78,9 @@ describe("computeCallSavings", () => {
   });
 
   it("falls back to a default ZeroGPU rate for an unknown model", () => {
-    const known = computeCallSavings(740, 280, "claude-opus-4-8", "gliner2-base-v1").savingsUsd;
+    const known = computeCallSavings(740, 280, "claude-opus-4-8", "qwen3-30b-a3b-fp8").savingsUsd;
     const unknown = computeCallSavings(740, 280, "claude-opus-4-8", "some-new-zgpu-model").savingsUsd;
-    // fallback equals gliner2's {0.05, 0.4} rate
+    // fallback equals the priciest published rate, qwen3's {0.05, 0.3}
     expect(unknown).toBeCloseTo(known, 10);
   });
 });
