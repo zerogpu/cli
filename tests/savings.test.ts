@@ -78,10 +78,27 @@ describe("computeCallSavings", () => {
   });
 
   it("falls back to a default ZeroGPU rate for an unknown model", () => {
-    const known = computeCallSavings(740, 280, "claude-opus-4-8", "qwen3-30b-a3b-fp8").savingsUsd;
+    const known = computeCallSavings(740, 280, "claude-opus-4-8", "glm-5.2").savingsUsd;
     const unknown = computeCallSavings(740, 280, "claude-opus-4-8", "some-new-zgpu-model").savingsUsd;
-    // fallback equals the priciest published rate, qwen3's {0.05, 0.3}
+    // fallback equals the priciest published rate, glm-5.2's {1.10, 3.50}
     expect(unknown).toBeCloseTo(known, 10);
+  });
+
+  it("never overstates savings for an unknown model", () => {
+    // The fallback must be at least as dear as every listed model, so an
+    // unlisted id can only ever under-report what was saved.
+    const unknown = computeCallSavings(740, 280, "claude-opus-4-8", "some-new-zgpu-model").savingsUsd;
+    for (const model of [
+      "gpt-oss-120b",
+      "qwen3-30b-a3b-fp8",
+      "glm-5.2",
+      "deepseek-v4-flash",
+      "LFM2.5-1.2B-Instruct",
+    ]) {
+      expect(unknown).toBeLessThanOrEqual(
+        computeCallSavings(740, 280, "claude-opus-4-8", model).savingsUsd,
+      );
+    }
   });
 });
 

@@ -21,6 +21,8 @@ const DEFAULT_BASELINE = "claude-opus-4-8";
 const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
   "gpt-oss-120b": { in: 0.03, out: 0.1 },
   "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
+  "glm-5.2": { in: 1.1, out: 3.5 },
+  "deepseek-v4-flash": { in: 0.07, out: 0.14 },
   "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
   "zlm-v1-iab-classify-edge": { in: 0.02, out: 0.05 },
   "zlm-v2-iab-classify-edge-enriched": { in: 0.02, out: 0.05 },
@@ -33,8 +35,9 @@ const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
   "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
 };
 // Conservative fallback for any model id not in the table above: the priciest
-// published rate, so an unlisted model never overstates savings.
-const ZGPU_FALLBACK = { in: 0.05, out: 0.3 };
+// published rate, so an unlisted model never overstates savings. Currently
+// glm-5.2, which is an order of magnitude dearer than the edge models.
+const ZGPU_FALLBACK = { in: 1.1, out: 3.5 };
 
 // Cadence: aim to show the savings note roughly once every 2–3 routed calls,
 // never twice in a row, and guaranteed within a bounded window.
