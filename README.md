@@ -134,6 +134,12 @@ zerogpu chat "Why does my API keep getting rate-limited?" -m gpt-oss-120b -r
 
 # Multilingual reasoning
 zerogpu chat "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
+
+# A 1M-token context, for whole repos and very long documents
+zerogpu chat "$(cat ARCHITECTURE.md)" -m glm-5.2
+
+# Coding and agentic work, at a fraction of the flagship price
+zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash
 ```
 
 | Option | Description |
@@ -148,8 +154,10 @@ zerogpu chat "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
 | `LFM2.5-1.2B-Thinking` | Compact reasoning model. |
 | `gpt-oss-120b` | 117B MoE, 131K context, reasoning + function calling. |
 | `qwen3-30b-a3b-fp8` | 30.5B MoE, 100+ languages, reasoning + function calling. |
+| `glm-5.2` | 753B MoE, 1M context, reasoning + function calling. The platform's most capable model, and its priciest. |
+| `deepseek-v4-flash` | 284B MoE (13B active), 1M context, coding and agentic workflows. |
 
-`qwen3-30b-a3b-fp8` is served by the Chat Completions API rather than the Responses API; the CLI routes it automatically.
+`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash` are served by the Chat Completions API rather than the Responses API; the CLI routes them automatically.
 
 #### `chat_thinking`
 

@@ -7,7 +7,7 @@ This guide explains how to add a new CLI command to the ZeroGPU CLI.
 - `src/commands/` — one file per command, each exporting a `register<Name>Command(program)` function.
 - `src/cli.ts` — wires every command into the root program.
 - `src/lib/responses.ts` — shared `RESPONSES_ENDPOINT`, `ResponsesApiResponse`, and the `extractOutputText` / `extractReasoningText` helpers for `/v1/responses` calls.
-- `src/lib/chatCompletions.ts` — the same for `/v1/chat/completions`, used by models the platform serves only there (currently `qwen3-30b-a3b-fp8`), plus `toResponsesUsage` to normalize token counts for savings tracking.
+- `src/lib/chatCompletions.ts` — the same for `/v1/chat/completions`, used by models the platform serves only there (currently `qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash`), plus `toResponsesUsage` to normalize token counts for savings tracking.
 - `src/lib/auth.ts` — `getApiKey()` for authenticated requests.
 
 ## Steps
