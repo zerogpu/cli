@@ -12,6 +12,7 @@ import {
   savingsPath,
   formatNotice,
   formatReport,
+  ZGPU_PRICING,
   type SavingsState,
 } from "../src/lib/savings.js";
 
@@ -99,6 +100,46 @@ describe("computeCallSavings", () => {
         computeCallSavings(740, 280, "claude-opus-4-8", model).savingsUsd,
       );
     }
+  });
+});
+
+describe("ZGPU_PRICING tracks the published model catalog", () => {
+  // Transcribed from https://docs.zerogpu.ai/docs/model-catalog ("At a glance").
+  // This is the whole catalog, not a sample: if ZeroGPU publishes a new model or
+  // repriced an existing one, this table is what must change, and the two tests
+  // below then force src/lib/savings.ts to change with it. Without this guard the
+  // CLI silently keeps a stale rate and misreports savings — which is exactly how
+  // gpt-oss-120b sat at $0.03/$0.10 long after it was repriced to $0.15/$0.60.
+  const CATALOG: Record<string, { in: number; out: number }> = {
+    "gpt-oss-120b": { in: 0.15, out: 0.6 },
+    "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
+    "glm-5.2": { in: 1.1, out: 3.5 },
+    "deepseek-v4-flash": { in: 0.07, out: 0.14 },
+    "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
+    "zlm-v2-iab-classify-edge-enriched": { in: 0.02, out: 0.05 },
+    "zlm-v1-iab-classify-edge": { in: 0.02, out: 0.05 },
+    "zlm-v1-iab-domain-classifier": { in: 0.02, out: 0.05 },
+    "zlm-v1-followup-questions-edge": { in: 0.02, out: 0.05 },
+    "gliner-multi-pii-v1": { in: 0.02, out: 0.05 },
+    "gliner2-base-v1": { in: 0.02, out: 0.05 },
+    "deberta-v3-small": { in: 0.02, out: 0.05 },
+    "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
+    "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
+  };
+
+  it("prices every catalog model at the published rate", () => {
+    for (const [model, published] of Object.entries(CATALOG)) {
+      expect(
+        ZGPU_PRICING[model],
+        `${model}: ZGPU_PRICING disagrees with the published catalog`,
+      ).toEqual(published);
+    }
+  });
+
+  it("prices nothing that the catalog does not list", () => {
+    // Guards the other direction: a model retired from the catalog, or a typo'd
+    // id, would otherwise linger here and quietly price real calls.
+    expect(Object.keys(ZGPU_PRICING).sort()).toEqual(Object.keys(CATALOG).sort());
   });
 });
 
