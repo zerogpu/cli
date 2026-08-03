@@ -17,9 +17,10 @@ const CLAUDE_PRICING: Record<string, { in: number; out: number }> = {
 const DEFAULT_BASELINE = "claude-opus-4-8";
 
 // Actual ZeroGPU pricing per 1M tokens (in / out), per model.
-// Source: https://docs.zerogpu.ai model catalog.
-const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
-  "gpt-oss-120b": { in: 0.03, out: 0.1 },
+// Source: https://docs.zerogpu.ai model catalog. Exported so a test can pin
+// this table to the published catalog — see tests/savings.test.ts.
+export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
+  "gpt-oss-120b": { in: 0.15, out: 0.6 },
   "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
   "glm-5.2": { in: 1.1, out: 3.5 },
   "deepseek-v4-flash": { in: 0.07, out: 0.14 },
