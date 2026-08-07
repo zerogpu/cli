@@ -591,7 +591,9 @@ zerogpu summarize "$(cat article.txt)"
 ```
 
 **Expected output**
-A single condensed summary string (or a JSON object if the model returns one).
+A single condensed summary string.
+
+`llama-3.1-8b-instruct-fast` has no Responses endpoint, so this command posts to `/v1/chat/completions` with a fixed system message instructing the model to summarize; the passage is sent as the user message. Being a general instruct model, it can be steered by instructions embedded in the passage — don't feed it untrusted text where that matters.
 
 **Outcomes** — same as the common table.
 
@@ -682,7 +684,7 @@ Content-Type: application/json
 x-api-key:    <ZEROGPU_API_KEY>
 ```
 
-The exceptions are `chat --model qwen3-30b-a3b-fp8`, `chat --model glm-5.2`, and `chat --model deepseek-v4-flash`, which the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
+The exceptions are `summarize`, `chat --model qwen3-30b-a3b-fp8`, `chat --model glm-5.2`, and `chat --model deepseek-v4-flash`, whose models the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
 
 ```
 POST https://api.zerogpu.ai/v1/chat/completions
