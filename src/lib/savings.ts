@@ -34,6 +34,13 @@ export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
   "deberta-v3-small": { in: 0.02, out: 0.05 },
   "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
   "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
+  "zlm-v1-moderation-edge": { in: 0.02, out: 0.05 },
+  "t5-small": { in: 0.05, out: 0.4 },
+  "zlm-v1-multi-iab-classify": { in: 0.05, out: 0.4 },
+  // Embedding models bill input tokens only; there are no output tokens to
+  // charge, so `out: 0` is the real rate, not a placeholder.
+  "all-minilm-l6-v2": { in: 0.5, out: 0 },
+  "bge-small-en-v1.5": { in: 0.5, out: 0 },
 };
 // Conservative fallback for any model id not in the table above: the priciest
 // published rate, so an unlisted model never overstates savings. Currently
