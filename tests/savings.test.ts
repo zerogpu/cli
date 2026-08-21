@@ -110,6 +110,11 @@ describe("ZGPU_PRICING tracks the published model catalog", () => {
   // below then force src/lib/savings.ts to change with it. Without this guard the
   // CLI silently keeps a stale rate and misreports savings — which is exactly how
   // gpt-oss-120b sat at $0.03/$0.10 long after it was repriced to $0.15/$0.60.
+  //
+  // One deliberate exception: zlm-v1-followup-questions-edge was removed from
+  // the published catalog when the model was deprecated, but `zerogpu
+  // generate-followups` still routes to it, so the CLI must still price it.
+  // Drop both entries together when that command goes.
   const CATALOG: Record<string, { in: number; out: number }> = {
     "gpt-oss-120b": { in: 0.15, out: 0.6 },
     "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
@@ -125,6 +130,11 @@ describe("ZGPU_PRICING tracks the published model catalog", () => {
     "deberta-v3-small": { in: 0.02, out: 0.05 },
     "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
     "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
+    "zlm-v1-moderation-edge": { in: 0.02, out: 0.05 },
+    "t5-small": { in: 0.05, out: 0.4 },
+    "zlm-v1-multi-iab-classify": { in: 0.05, out: 0.4 },
+    "all-minilm-l6-v2": { in: 0.5, out: 0 },
+    "bge-small-en-v1.5": { in: 0.5, out: 0 },
   };
 
   it("prices every catalog model at the published rate", () => {
