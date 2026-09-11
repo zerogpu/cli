@@ -1,14 +1,22 @@
 name: Release
 
+# Press the button: Actions -> Release -> Run workflow.
+#
+# It reads the version out of package.json, tags that commit, pushes the tag,
+# publishes to npm, and cuts a GitHub Release. Bumping package.json is the only
+# step done by hand — if the version on main is already tagged, the run stops
+# before it changes anything.
+#
+# A vX.Y.Z tag pushed by hand still lands here too.
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Existing tag to publish (e.g. v3.7.0)"
-        required: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -21,8 +29,6 @@ jobs:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-node@v5
         with:
           node-version: 20
@@ -33,19 +39,36 @@ jobs:
       - name: Use npm >= 11.5.1
         run: npm install -g npm@latest
 
+      - name: Resolve tag
+        id: tag
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="v$VERSION"
+          fi
+          if [ "${TAG#v}" != "$VERSION" ]; then
+            echo "::error::Tag $TAG does not match package.json version $VERSION"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Releasing $TAG"
+
+      # The tag is the record of what has shipped, so "already tagged" is the
+      # same question as "already published". No bump, nothing to release.
+      - name: Refuse to re-release an existing version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::$TAG is already tagged — ${TAG#v} is published. Bump the version in package.json and merge to main first."
+            exit 1
+          fi
+
       - run: npm ci
       - run: npm run build
       - run: npm test
-
-      - name: Verify tag matches package.json version
-        run: |
-          TAG="${{ inputs.tag || github.ref_name }}"
-          TAG="${TAG#v}"
-          PKG="$(node -p "require('./package.json').version")"
-          if [ "$TAG" != "$PKG" ]; then
-            echo "::error::Tag v$TAG does not match package.json version $PKG"
-            exit 1
-          fi
 
       # npm answers an unauthenticated/expired-token publish with a bare
       # "404 Not Found - PUT", which reads like the package doesn't exist.
@@ -62,6 +85,15 @@ jobs:
           fi
           echo "Authenticated to npm as $WHO"
 
+      - name: Push tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
+
       - name: Publish to npm
         env:
           # Empty when Trusted Publishing (OIDC) is configured for the package;
@@ -73,5 +105,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ inputs.tag || github.ref_name }}"
+          TAG="${{ steps.tag.outputs.tag }}"
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes

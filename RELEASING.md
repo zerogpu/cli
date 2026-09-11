@@ -1,44 +1,60 @@
 # Releasing
 
-From a clean `main`, fully up to date:
+Releasing is two steps: bump the version in a PR, then press a button.
 
-```bash
-git checkout main
-git pull
-npm run release
+## 1. Bump `package.json` in your PR
+
+Edit the `version` field — patch for a bug fix (`3.7.0` → `3.7.1`), minor for a
+new feature (`3.8.0`), major for a breaking change (`4.0.0`) — and update the
+two `version` fields in `package-lock.json` to match. Commit it with the rest
+of your work and merge to `main` as usual.
+
+A PR that shouldn't ship anything just leaves the version alone.
+
+## 2. Press the button
+
+**Actions → Release → Run workflow**, on `main`.
+
+The workflow reads the version out of `package.json`, tags that commit
+`vX.Y.Z`, pushes the tag, publishes to npm, and creates a GitHub Release.
+
+If the version on `main` is already tagged — i.e. nobody bumped it — the run
+fails immediately, before it changes anything:
+
+```
+v3.7.0 is already tagged — 3.7.0 is published. Bump the version in
+package.json and merge to main first.
 ```
 
-`npm run release` bumps `package.json` (patch), creates a commit and a `vX.Y.Z` tag, and pushes both. The tag push triggers `.github/workflows/release.yml`, which builds, tests, publishes to npm, and creates a GitHub Release.
+So pressing the button twice, or pressing it after a merge that made no
+release-worthy change, is safe.
 
-## Variants
+## Pre-flight
 
-```bash
-# minor bump (new feature, e.g. 2.1.0 → 2.2.0)
-npm run release:minor
-
-# major bump (breaking change, e.g. 2.1.0 → 3.0.0)
-npm run release:major
-```
-
-Each script bumps `package.json`, creates a commit and `vX.Y.Z` tag, and pushes both — same flow as `npm run release`, just with a different version segment.
-
-## Pre-flight checklist
-
-- `git status` — working tree clean
-- `git branch --show-current` — on `main`
-- `git pull` — up to date with origin
-- CI green on the latest `main` commit
-
-`npm version` refuses to run on a dirty tree, which is the main guardrail.
+- The version in `package.json` on `main` is the one you mean to publish
+- CI is green on the latest `main` commit
 
 ## If something goes wrong mid-release
 
-- **Workflow fails after publish succeeded** (e.g. release-creation step): the npm version is live; create the GitHub release manually:
+The tag is pushed only after `npm ci`, the build, the tests, and the npm
+credential check have all passed, so an early failure leaves no trace — fix the
+problem and press the button again.
+
+- **Failed after the tag was pushed but before publish**: delete the tag, then
+  press the button again.
+  ```bash
+  git push origin :refs/tags/vX.Y.Z
+  ```
+- **Failed after publish succeeded** (e.g. the release-creation step): the npm
+  version is live and the tag exists. Create the GitHub Release by hand:
   ```bash
   gh release create vX.Y.Z --generate-notes
   ```
-- **Workflow fails before publish**: fix the issue, delete the tag locally and remotely, then bump to the next patch:
-  ```bash
-  git tag -d vX.Y.Z
-  git push origin :refs/tags/vX.Y.Z
-  ```
+  npm will not let the same version be published twice, so don't re-run the
+  workflow — bump to the next patch if you need to ship a fix.
+
+## Publishing an existing tag
+
+Pushing a `vX.Y.Z` tag by hand also triggers the workflow, which is how the
+older flow worked. The tag must match `package.json` at that commit or the run
+fails.
