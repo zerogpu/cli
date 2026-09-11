@@ -4,10 +4,15 @@ Releasing is two steps: bump the version in a PR, then press a button.
 
 ## 1. Bump `package.json` in your PR
 
-Edit the `version` field — patch for a bug fix (`3.7.0` → `3.7.1`), minor for a
-new feature (`3.8.0`), major for a breaking change (`4.0.0`) — and update the
-two `version` fields in `package-lock.json` to match. Commit it with the rest
-of your work and merge to `main` as usual.
+```bash
+npm run bump         # patch — bug fix, e.g. 3.7.0 → 3.7.1
+npm run bump:minor   # new feature, e.g. 3.7.0 → 3.8.0
+npm run bump:major   # breaking change, e.g. 3.7.0 → 4.0.0
+```
+
+Each updates `package.json` and `package-lock.json` and nothing else — no
+commit, no tag. Commit the change with the rest of your work and merge to
+`main` as usual.
 
 A PR that shouldn't ship anything just leaves the version alone.
 
