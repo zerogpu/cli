@@ -35,9 +35,11 @@ jobs:
           cache: npm
           registry-url: "https://registry.npmjs.org"
 
-      # Node 20 ships npm 10, which cannot do OIDC trusted publishing.
+      # Node 20 ships npm 10, which cannot do OIDC trusted publishing. Pinned to
+      # the 11.x line on purpose: npm 12 requires Node 22+, and this job stays on
+      # the Node version the package claims to support.
       - name: Use npm >= 11.5.1
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11
 
       - name: Resolve tag
         id: tag
