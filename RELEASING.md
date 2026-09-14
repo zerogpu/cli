@@ -1,52 +1,57 @@
 # Releasing
 
-Releasing is two steps: bump the version in a PR, then press a button.
+There is no release step. Bump the version in your PR; merging it to `main`
+publishes.
 
-## 1. Bump `package.json` in your PR
+## Bump `package.json` in your PR
 
 ```bash
-npm run bump         # patch — bug fix, e.g. 3.7.0 → 3.7.1
-npm run bump:minor   # new feature, e.g. 3.7.0 → 3.8.0
-npm run bump:major   # breaking change, e.g. 3.7.0 → 4.0.0
+npm run bump         # patch — bug fix, e.g. 3.7.1 → 3.7.2
+npm run bump:minor   # new feature, e.g. 3.7.1 → 3.8.0
+npm run bump:major   # breaking change, e.g. 3.7.1 → 4.0.0
 ```
 
 Each updates `package.json` and `package-lock.json` and nothing else — no
-commit, no tag. Commit the change with the rest of your work and merge to
-`main` as usual.
+commit, no tag. Commit both files with the rest of your work.
 
-A PR that shouldn't ship anything just leaves the version alone.
+**Use the scripts rather than editing the version by hand.** `package-lock.json`
+carries the version in two places, and the release only fires when all three
+agree.
 
-## 2. Press the button
+A PR that shouldn't ship anything just leaves the version alone. That's the
+normal case, and it needs no thought.
 
-**Actions → Release → Run workflow**, on `main`.
+## What happens on merge
 
-The workflow reads the version out of `package.json`, tags that commit
-`vX.Y.Z`, pushes the tag, publishes to npm, and creates a GitHub Release.
+1. CI runs on `main` — lint, build, test
+2. If CI is green, Release wakes up and checks the merged commit
+3. If the version is newly bumped, it tags `vX.Y.Z`, pushes the tag, publishes
+   to npm with provenance, and creates a GitHub Release
+4. If not, the run goes green and does nothing
 
-If the version on `main` is already tagged — i.e. nobody bumped it — the run
-fails immediately, before it changes anything:
+Step 4 is the common path. A skipped release is not a failure and never shows a
+red X — check the run's summary for the reason if you expected a publish.
 
-```
-v3.7.0 is already tagged — 3.7.0 is published. Bump the version in
-package.json and merge to main first.
-```
+## When it declines to release
 
-So pressing the button twice, or pressing it after a merge that made no
-release-worthy change, is safe.
+Each of these leaves a note on the Release run and ships nothing:
 
-## Pre-flight
+| Summary line | Meaning | Fix |
+|---|---|---|
+| `vX.Y.Z is already tagged` | The version on `main` is already published. | Nothing — this is every ordinary merge. |
+| `package.json is X but package-lock.json says Y / Z` | The lockfile wasn't updated with the bump. | `npm install`, commit the lockfile, push. |
+| `package.json is X, which is older than the latest release Y` | The version went backwards. | Bump above the latest release. npm can't un-publish a bad `latest`, so this one is refused rather than guessed at. |
 
-- The version in `package.json` on `main` is the one you mean to publish
-- CI is green on the latest `main` commit
+If CI fails, Release never starts.
 
 ## If something goes wrong mid-release
 
 The tag is pushed only after `npm ci`, the build, the tests, and the npm
-credential check have all passed, so an early failure leaves no trace — fix the
-problem and press the button again.
+credential check have all passed, so an early failure leaves no tag and no
+published version — fix the problem, push again, and the same bump releases.
 
 - **Failed after the tag was pushed but before publish**: delete the tag, then
-  press the button again.
+  re-run the workflow (Actions → Release → Run workflow).
   ```bash
   git push origin :refs/tags/vX.Y.Z
   ```
@@ -55,11 +60,14 @@ problem and press the button again.
   ```bash
   gh release create vX.Y.Z --generate-notes
   ```
-  npm will not let the same version be published twice, so don't re-run the
-  workflow — bump to the next patch if you need to ship a fix.
+  npm won't accept the same version twice, so don't re-run — bump to the next
+  patch if you need to ship a fix.
 
-## Publishing an existing tag
+A new version can take a minute or two to appear on `npm view zerogpu-cli` after
+the workflow goes green. That's registry propagation, not a failed publish.
 
-Pushing a `vX.Y.Z` tag by hand also triggers the workflow, which is how the
-older flow worked. The tag must match `package.json` at that commit or the run
-fails.
+## Manual dispatch
+
+**Actions → Release → Run workflow** runs the same checks against the head of
+`main`, skipping the CI gate. It exists to retry a release that died at the
+registry. It is not the normal path and isn't needed for an ordinary release.
