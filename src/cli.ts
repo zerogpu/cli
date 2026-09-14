@@ -14,7 +14,6 @@ import { registerCostSavingsCommand } from "./commands/costSavings.js";
 import { registerExtractEntitiesCommand } from "./commands/extractEntities.js";
 import { registerExtractJsonCommand } from "./commands/extractJson.js";
 import { registerExtractPiiCommand } from "./commands/extractPii.js";
-import { registerGenerateFollowupsCommand } from "./commands/generateFollowups.js";
 import { registerLoginCommand } from "./commands/login.js";
 import { registerRedactPiiCommand } from "./commands/redactPii.js";
 import { registerStatusCommand } from "./commands/status.js";
@@ -99,7 +98,6 @@ export function buildProgram(): Command {
   registerClassifyDomainCommand(program);
   registerClassifyStructuredCommand(program);
   registerClassifyZeroShotCommand(program);
-  registerGenerateFollowupsCommand(program);
   registerRedactPiiCommand(program);
   registerExtractPiiCommand(program);
   registerExtractEntitiesCommand(program);
