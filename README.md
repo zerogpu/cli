@@ -21,7 +21,6 @@ The official command-line interface for [ZeroGPU](https://zerogpu.ai) — run fa
     - [`chat`](#chat)
     - [`chat_thinking`](#chat_thinking)
     - [`summarize`](#summarize)
-    - [`generate_followups`](#generate_followups)
   - [Classification](#classification)
     - [`classify_iab`](#classify_iab)
     - [`classify_iab_enriched`](#classify_iab_enriched)
@@ -135,11 +134,11 @@ zerogpu chat "Why does my API keep getting rate-limited?" -m gpt-oss-120b -r
 # Multilingual reasoning
 zerogpu chat "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
 
-# A 1M-token context, for whole repos and very long documents
+# The platform's most capable model, and its priciest
 zerogpu chat "$(cat ARCHITECTURE.md)" -m glm-5.2
 
 # Coding and agentic work, at a fraction of the flagship price
-zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash
+zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash-0731
 ```
 
 | Option | Description |
@@ -152,12 +151,12 @@ zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash
 |---|---|
 | `LFM2.5-1.2B-Instruct` | Default. Fast edge chat. |
 | `LFM2.5-1.2B-Thinking` | Compact reasoning model. |
-| `gpt-oss-120b` | 117B MoE, 131K context, reasoning + function calling. |
-| `qwen3-30b-a3b-fp8` | 30.5B MoE, 100+ languages, reasoning + function calling. |
-| `glm-5.2` | 753B MoE, 1M context, reasoning + function calling. The platform's most capable model, and its priciest. |
-| `deepseek-v4-flash` | 284B MoE (13B active), 1M context, coding and agentic workflows. |
+| `gpt-oss-120b` | 120B MoE, 131K context, reasoning + function calling. |
+| `qwen3-30b-a3b-fp8` | 30B MoE, 100+ languages, reasoning + function calling. |
+| `glm-5.2` | 753B MoE, 262K context, reasoning + function calling. The platform's most capable model, and its priciest. |
+| `deepseek-v4-flash-0731` | 284B MoE (13B active), 1M context, coding and agentic workflows. |
 
-`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash` are served by the Chat Completions API rather than the Responses API; the CLI routes them automatically.
+`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash-0731` are served by the Chat Completions API rather than the Responses API; the CLI routes them automatically.
 
 #### `chat_thinking`
 
@@ -173,14 +172,6 @@ Summarize text with the **llama-3.1-8b-instruct-fast** model.
 
 ```bash
 zerogpu summarize "Long article text goes here..."
-```
-
-#### `generate_followups`
-
-Generate contextual follow-up questions using the ZeroGPU follow-up edge model.
-
-```bash
-zerogpu generate_followups "We just shipped a new pricing page focused on enterprise plans."
 ```
 
 ---

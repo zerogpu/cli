@@ -5,7 +5,7 @@
 `zerogpu-cli` is the official command-line interface for [ZeroGPU](https://zerogpu.ai), a distributed / edge inference platform for small language models (SLMs) and nano language models. The CLI is a thin, OpenAI-compatible client around the ZeroGPU **Responses API** (`https://api.zerogpu.ai/v1/responses`) — and, for models served only there, the **Chat Completions API** (`https://api.zerogpu.ai/v1/chat/completions`) — that lets you call a curated set of edge-optimized models directly from your terminal for common NLP workloads:
 
 - Conversational chat (`LFM2.5-1.2B-Instruct`, `LFM2.5-1.2B-Thinking`)
-- Reasoning and tool-use chat (`gpt-oss-120b`, `qwen3-30b-a3b-fp8`, `glm-5.2`, `deepseek-v4-flash`)
+- Reasoning and tool-use chat (`gpt-oss-120b`, `qwen3-30b-a3b-fp8`, `glm-5.2`, `deepseek-v4-flash-0731`)
 - IAB content/audience classification (`zlm-v1-iab-classify-edge`, `zlm-v2-iab-classify-edge-enriched`)
 - Domain-level IAB classification (`zlm-v1-iab-domain-classifier`)
 - Zero-shot classification (`deberta-v3-small`)
@@ -13,7 +13,6 @@
 - Named-entity recognition with custom labels (`gliner2-base-v1`)
 - PII extraction & redaction (`gliner-multi-pii-v1`)
 - Text summarization (`llama-3.1-8b-instruct-fast`)
-- Follow-up question generation (`zlm-v1-followup-questions-edge`)
 
 It is written in TypeScript (ESM, Node ≥ 20), built on [`commander`](https://github.com/tj/commander.js), and ships a single executable: `zerogpu`.
 
@@ -102,8 +101,7 @@ The CLI exposes the following commands:
 | [`redact_pii`](#411-redact_pii) | Mask PII in-line in the text |
 | [`extract_json`](#412-extract_json) | Schema-driven structured JSON extraction |
 | [`summarize`](#413-summarize) | Summarize text with `llama-3.1-8b-instruct-fast` |
-| [`generate_followups`](#414-generate_followups) | Generate follow-up questions |
-| [`classify_domain`](#415-classify_domain) | Domain-level IAB classification |
+| [`classify_domain`](#414-classify_domain) | Domain-level IAB classification |
 
 ### Common exit codes
 | Code | Meaning |
@@ -207,12 +205,12 @@ zerogpu chat <text> [-i <instructions>] [-m <model>] [-r]
 |---|---|---|
 | `LFM2.5-1.2B-Instruct` | Responses | Default. Fast edge chat. |
 | `LFM2.5-1.2B-Thinking` | Responses | Compact reasoning model. |
-| `gpt-oss-120b` | Responses | 117B MoE, 131K context, reasoning + function calling. |
-| `qwen3-30b-a3b-fp8` | Chat Completions | 30.5B MoE, 100+ languages, reasoning + function calling. |
-| `glm-5.2` | Chat Completions | 753B MoE, 1,048,576-token context, reasoning + function calling. The most capable model on the platform, and the most expensive by an order of magnitude. |
-| `deepseek-v4-flash` | Chat Completions | 284B MoE (13B active), 1,048,576-token context, coding and agentic workflows. |
+| `gpt-oss-120b` | Responses | 120B MoE, 131K context, reasoning + function calling. |
+| `qwen3-30b-a3b-fp8` | Chat Completions | 30B MoE, 100+ languages, reasoning + function calling. |
+| `glm-5.2` | Chat Completions | 753B MoE, 262,144-token context, reasoning + function calling. The most capable model on the platform, and the most expensive by an order of magnitude. |
+| `deepseek-v4-flash-0731` | Chat Completions | 284B MoE (13B active), 1,048,576-token context, coding and agentic workflows. |
 
-`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash` have no Responses endpoint, so the CLI posts them to `/v1/chat/completions` instead, mapping `--instructions` to a `system` message and normalizing `prompt_tokens` / `completion_tokens` back to Responses token names for savings tracking. This routing is transparent — the command and its output are identical either way.
+`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash-0731` have no Responses endpoint, so the CLI posts them to `/v1/chat/completions` instead, mapping `--instructions` to a `system` message and normalizing `prompt_tokens` / `completion_tokens` back to Responses token names for savings tracking. This routing is transparent — the command and its output are identical either way.
 
 **Example**
 ```bash
@@ -599,41 +597,7 @@ A single condensed summary string.
 
 ---
 
-### 4.14 `generate_followups`
-
-Generate contextual follow-up questions using `zlm-v1-followup-questions-edge`.
-
-**Synopsis**
-```
-zerogpu generate_followups <text>
-```
-
-**Parameters**
-
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `text` (positional) | string | yes | Conversation turn / passage to generate follow-ups for. |
-
-**Example**
-```bash
-zerogpu generate_followups \
-  "Solar panel adoption increased 35% in the US last year."
-```
-
-**Expected output (illustrative)**
-```json
-[
-  "Which states drove the largest share of the increase?",
-  "How does residential adoption compare to commercial?",
-  "What policy changes contributed to this growth?"
-]
-```
-
-**Outcomes** — same as the common table.
-
----
-
-### 4.15 `classify_domain`
+### 4.14 `classify_domain`
 
 Classify a domain name against the IAB taxonomy using `zlm-v1-iab-domain-classifier`. It infers the categories that characterize a site as a whole from the hostname alone — no crawl, no page text — which keeps payloads roughly 10x smaller than page-level classification. Use it for bidstream enrichment, allow/deny-list scoring, and inventory-level targeting; when you have the page text and need per-URL precision, use [`classify_iab`](#45-classify_iab) instead.
 
@@ -684,7 +648,7 @@ Content-Type: application/json
 x-api-key:    <ZEROGPU_API_KEY>
 ```
 
-The exceptions are `summarize`, `chat --model qwen3-30b-a3b-fp8`, `chat --model glm-5.2`, and `chat --model deepseek-v4-flash`, whose models the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
+The exceptions are `summarize`, `chat --model qwen3-30b-a3b-fp8`, `chat --model glm-5.2`, and `chat --model deepseek-v4-flash-0731`, whose models the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
 
 ```
 POST https://api.zerogpu.ai/v1/chat/completions
