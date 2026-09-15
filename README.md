@@ -33,6 +33,11 @@ The official command-line interface for [ZeroGPU](https://zerogpu.ai) — run fa
     - [`extract_json`](#extract_json)
     - [`extract_pii`](#extract_pii)
     - [`redact_pii`](#redact_pii)
+  - [Endpoints](#endpoints)
+    - [`responses`](#responses)
+    - [`chat_completions`](#chat_completions)
+    - [`moderations`](#moderations)
+    - [`embeddings`](#embeddings)
 - [Environment Variables](#environment-variables)
 - [Output](#output)
 - [Troubleshooting](#troubleshooting)
@@ -297,6 +302,63 @@ Detect and **redact** PII in text — returns the input with sensitive spans mas
 
 ```bash
 zerogpu redact_pii "Call Sarah at 415-555-0100 or email sarah@acme.com."
+```
+
+---
+
+### Endpoints
+
+Call a ZeroGPU API endpoint directly, with any model. These commands keep no model list: the model you pass is sent as-is, so a model the platform adds or renames works without a CLI update. They are the stable surface the ZeroGPU agent plugins build on.
+
+Text comes from the positional argument, or from stdin when there isn't one, which keeps very large prompts off the command line.
+
+| Option | Applies to | Description |
+|---|---|---|
+| `-m, --model <model>` | all | **Required.** Model id, sent exactly as given. |
+| `-i, --instructions <text>` | `responses`, `chat_completions` | `responses`: the `instructions` field. `chat_completions`: a system message ahead of the text. |
+| `--metadata <json>` | `responses`, `chat_completions` | JSON object sent as `metadata` — the per-model options such as `usecase`, `labels`, `schema`, `threshold`. |
+| `--body <json>` | all | Extra top-level request fields, e.g. `'{"max_output_tokens":256}'`. Fields set by the other options take precedence. |
+| `--raw` | `responses`, `chat_completions` | Print the full API response instead of only the model's text. |
+
+`responses` and `chat_completions` print the model's text, pretty-printed when it is JSON. `moderations` and `embeddings` print the full response. Every call is recorded for `cost_savings`, like the task commands.
+
+#### `responses`
+
+POST to `/v1/responses`.
+
+```bash
+zerogpu responses "Email John Smith at john@acme.com." -m gliner-multi-pii-v1 \
+  --metadata '{"usecase":"redact","mask":"label"}'
+
+# Long input from a file, on stdin
+zerogpu responses -m gpt-oss-120b -i "Summarize this report." < report.txt
+```
+
+#### `chat_completions`
+
+POST to `/v1/chat/completions`. Also available as `chat-completions`.
+
+```bash
+zerogpu chat_completions "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
+
+zerogpu chat_completions "The app uses Python 3.11 and PostgreSQL 15." -m gliner2-base-v1 \
+  --metadata '{"usecase":"ner","labels":["programming language","database"],"threshold":0.3}'
+```
+
+#### `moderations`
+
+POST to `/v1/moderations`.
+
+```bash
+zerogpu moderations "Screen this comment before we publish it." -m zlm-v1-moderation-edge
+```
+
+#### `embeddings`
+
+POST to `/v1/embeddings`.
+
+```bash
+zerogpu embeddings "ZeroGPU runs small models at the edge." -m all-minilm-l6-v2
 ```
 
 ---

@@ -135,6 +135,8 @@ There is no exemption list. A model the API does not return is not a ZeroGPU mod
 | `Text Generation` | pricing, `chat --model`, the `chat` Models tables and routing sentences |
 | every other task — `Summarization`, `Text Classification`, `Text Moderation`, `PII`, `Text Embedding`, and any new one | pricing only; a command calls it only when its `MODEL` constant already names it |
 
+The endpoint commands — `responses`, `chat_completions`, `moderations`, `embeddings` — take the model from `-m` and hold no model list. That is deliberate: it is what keeps the agent plugins working across model changes without a CLI release. Never add a model list, route, or validation to them, and never delete them in [loop 3](#3-remove-what-is-gone); they have no model to lose. Model ids in their doc examples follow the normal rename and removal rules.
+
 ## Never invent
 
 API-sourced facts only: id, task, `maxTokens`, input/output price, parameter count, use cases. Architecture details (`MoE`, `13B active`), language counts, and provider comparisons may be carried over from an existing notes cell while still true, or taken from `pricing.description` — never generated. Comparisons that follow from the payload's own prices ("its priciest") are allowed. Never invent a command, a flag, an example output, or a route.

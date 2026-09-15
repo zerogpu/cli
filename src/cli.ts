@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import updateNotifier from "update-notifier";
 import { registerChatCommand } from "./commands/chat.js";
+import { registerChatCompletionsCommand } from "./commands/chatCompletions.js";
 import { registerChatThinkingCommand } from "./commands/chatThinking.js";
 import { registerClassifyDomainCommand } from "./commands/classifyDomain.js";
 import { registerClassifyIabCommand } from "./commands/classifyIab.js";
@@ -11,12 +12,15 @@ import { registerClassifyIabEnrichedCommand } from "./commands/classifyIabEnrich
 import { registerClassifyStructuredCommand } from "./commands/classifyStructured.js";
 import { registerClassifyZeroShotCommand } from "./commands/classifyZeroShot.js";
 import { registerCostSavingsCommand } from "./commands/costSavings.js";
+import { registerEmbeddingsCommand } from "./commands/embeddings.js";
 import { registerExtractEntitiesCommand } from "./commands/extractEntities.js";
 import { registerExtractJsonCommand } from "./commands/extractJson.js";
 import { registerExtractPiiCommand } from "./commands/extractPii.js";
 import { registerGenerateFollowupsCommand } from "./commands/generateFollowups.js";
 import { registerLoginCommand } from "./commands/login.js";
+import { registerModerationsCommand } from "./commands/moderations.js";
 import { registerRedactPiiCommand } from "./commands/redactPii.js";
+import { registerResponsesCommand } from "./commands/responses.js";
 import { registerStatusCommand } from "./commands/status.js";
 import { registerSummarizeCommand } from "./commands/summarize.js";
 
@@ -107,6 +111,10 @@ export function buildProgram(): Command {
   registerSummarizeCommand(program);
   registerChatCommand(program);
   registerChatThinkingCommand(program);
+  registerResponsesCommand(program);
+  registerChatCompletionsCommand(program);
+  registerModerationsCommand(program);
+  registerEmbeddingsCommand(program);
   registerCostSavingsCommand(program);
 
   return program;
