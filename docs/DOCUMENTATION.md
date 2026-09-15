@@ -104,6 +104,12 @@ The CLI exposes the following commands:
 | [`summarize`](#413-summarize) | Summarize text with `llama-3.1-8b-instruct-fast` |
 | [`generate_followups`](#414-generate_followups) | Generate follow-up questions |
 | [`classify_domain`](#415-classify_domain) | Domain-level IAB classification |
+| [`responses`](#416-responses) | Call `/v1/responses` with any model |
+| [`chat_completions`](#417-chat_completions) | Call `/v1/chat/completions` with any model |
+| [`moderations`](#418-moderations) | Call `/v1/moderations` with any model |
+| [`embeddings`](#419-embeddings) | Call `/v1/embeddings` with any model |
+
+Commands 4.1–4.15 each wrap one task and pin its model. The endpoint commands, 4.16–4.19, take the model from `--model` and keep no model list, so a model the platform adds or renames works with them without a CLI release.
 
 ### Common exit codes
 | Code | Meaning |
@@ -674,7 +680,166 @@ zerogpu classify_domain nytimes.com
 
 ---
 
+### 4.16 `responses`
+
+Call the Responses API with any model. The model id is sent exactly as given — the CLI does not check it against a list, so the API decides whether it exists.
+
+**Synopsis**
+```
+zerogpu responses [text] -m <model> [-i <instructions>] [--metadata <json>] [--body <json>] [--raw]
+```
+
+**Parameters**
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `text` (positional) | string | optional | Input text. When omitted, read from stdin, with trailing newlines dropped. |
+| `-m`, `--model <model>` | string | **yes** | Model id. |
+| `-i`, `--instructions <instructions>` | string | optional | Sent as `instructions`. |
+| `--metadata <json>` | JSON object | optional | Sent as `metadata` — the model's options, e.g. `{"usecase":"redact","mask":"label"}`. |
+| `--body <json>` | JSON object | optional | Extra top-level request fields. `model`, `input`, `instructions`, and `metadata` from the other options take precedence. |
+| `--raw` | boolean | optional | Print the full response instead of the output text. |
+
+**Request body**
+```jsonc
+{ /* ...--body */ "model": "<--model>", "input": "<text>", "instructions": "<-i>", "metadata": { /* --metadata */ } }
+```
+
+**Example**
+```bash
+zerogpu responses "Email John Smith at john@acme.com about invoice 12345." \
+  -m gliner-multi-pii-v1 --metadata '{"usecase":"redact","mask":"label"}'
+
+zerogpu responses -m zlm-v1-iab-classify-edge < article.txt
+```
+
+**Expected output**
+The output text (the `output_text` part of the `message` item, which skips any reasoning item), pretty-printed when it parses as JSON. With `--raw`, the whole response as JSON.
+```
+Email [PERSON] at [EMAIL] about invoice 12345.
+```
+
+**Outcomes**
+
+| Outcome | Exit |
+|---|---|
+| Success — output printed | `0` |
+| Not signed in | `1` |
+| `--model` missing | `1` — `error: required option '-m, --model <model>' not specified` |
+| `--metadata` or `--body` is not a JSON object | `1` — `Invalid --metadata JSON: <message>` or `--metadata must be a JSON object.` |
+| No text in the argument or on stdin | `1` — `No input text. Pass it as an argument or pipe it on stdin.` |
+| Network error (fetch threw) | `1` — `Request failed: <message>` |
+| HTTP non-2xx, including an unknown model | `1` — `Request failed with status <code>.` + body |
+| Response missing output text (without `--raw`) | `1` — `Response did not contain any output text.` + raw JSON dump |
+
+---
+
+### 4.17 `chat_completions`
+
+Call the Chat Completions API with any model. Alias: `chat-completions`.
+
+**Synopsis**
+```
+zerogpu chat_completions [text] -m <model> [-i <instructions>] [--metadata <json>] [--body <json>] [--raw]
+```
+
+**Parameters**
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `text` (positional) | string | optional | Sent as the `user` message. When omitted, read from stdin, with trailing newlines dropped. |
+| `-m`, `--model <model>` | string | **yes** | Model id. |
+| `-i`, `--instructions <instructions>` | string | optional | Sent as a `system` message ahead of the user message. |
+| `--metadata <json>` | JSON object | optional | Sent as `metadata`, e.g. `{"usecase":"ner","labels":["database"],"threshold":0.3}`. |
+| `--body <json>` | JSON object | optional | Extra top-level request fields. `model`, `messages`, and `metadata` from the other options take precedence. |
+| `--raw` | boolean | optional | Print the full response instead of the message content. |
+
+**Request body**
+```jsonc
+{ /* ...--body */ "model": "<--model>", "messages": [{ "role": "system", "content": "<-i>" }, { "role": "user", "content": "<text>" }], "metadata": { /* --metadata */ } }
+```
+
+**Example**
+```bash
+zerogpu chat_completions "The application is built with Python 3.11 and uses PostgreSQL 15." \
+  -m gliner2-base-v1 \
+  --metadata '{"usecase":"ner","labels":["programming language","database"],"threshold":0.3}'
+```
+
+**Expected output**
+`choices[0].message.content`, pretty-printed when it parses as JSON. The reasoning trace is not printed; use `--raw` to see it.
+```json
+{
+  "entities": {
+    "programming language": ["Python 3.11"],
+    "database": ["PostgreSQL 15"]
+  }
+}
+```
+
+**Outcomes** — as for [`responses`](#416-responses), except a response with no message content exits `1` with `Response did not contain any message content.` + raw JSON dump.
+
+---
+
+### 4.18 `moderations`
+
+Call the Moderations API with any model and print the response.
+
+**Synopsis**
+```
+zerogpu moderations [text] -m <model> [--body <json>]
+```
+
+**Parameters**
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `text` (positional) | string | optional | Text to screen. When omitted, read from stdin. |
+| `-m`, `--model <model>` | string | **yes** | Model id, e.g. `zlm-v1-moderation-edge`. |
+| `--body <json>` | JSON object | optional | Extra top-level request fields. `model` and `input` take precedence. |
+
+**Example**
+```bash
+zerogpu moderations "Screen this comment before we publish it." -m zlm-v1-moderation-edge
+```
+
+**Expected output** — the moderations response as JSON: `results[].flagged`, `results[].categories`, and `results[].category_scores`.
+
+**Outcomes** — as for [`responses`](#416-responses); there is no content to extract, so a successful response is always printed.
+
+---
+
+### 4.19 `embeddings`
+
+Call the Embeddings API with any model and print the response.
+
+**Synopsis**
+```
+zerogpu embeddings [text] -m <model> [--body <json>]
+```
+
+**Parameters**
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `text` (positional) | string | optional | Text to embed. When omitted, read from stdin. |
+| `-m`, `--model <model>` | string | **yes** | Model id, e.g. `all-minilm-l6-v2` or `bge-small-en-v1.5`. |
+| `--body <json>` | JSON object | optional | Extra top-level request fields. `model` and `input` take precedence. |
+
+**Example**
+```bash
+zerogpu embeddings "ZeroGPU runs small models at the edge." -m all-minilm-l6-v2
+```
+
+**Expected output** — the embeddings response as JSON: `data[].embedding` holds the vector and `usage` the input tokens.
+
+**Outcomes** — as for [`moderations`](#418-moderations).
+
+---
+
 ## 5. Network & API Contract
+
+The endpoint commands (4.16–4.19) POST to the endpoint they are named for — `/v1/responses`, `/v1/chat/completions`, `/v1/moderations`, `/v1/embeddings` — with the headers below. The rest of this section describes the task commands.
 
 All inference commands POST to:
 

@@ -2,6 +2,8 @@
 
 This guide explains how to add a new CLI command to the ZeroGPU CLI.
 
+**First, check whether you need one.** The endpoint commands — `responses`, `chat_completions`, `moderations`, and `embeddings` — already reach every model on those endpoints: they send whatever `--model`, `--metadata`, and `--body` the caller gives. The Claude Code and OpenClaw plugins call them, so a new model needs no CLI change for the plugins to use it. Add a task command only when a dedicated, discoverable command is worth having for people using the CLI directly. Keep the endpoint commands free of model lists; that is what keeps the plugins independent of CLI releases.
+
 ## Layout
 
 - `src/commands/` — one file per command, each exporting a `register<Name>Command(program)` function.
@@ -9,6 +11,7 @@ This guide explains how to add a new CLI command to the ZeroGPU CLI.
 - `src/lib/responses.ts` — shared `RESPONSES_ENDPOINT`, `ResponsesApiResponse`, and the `extractOutputText` / `extractReasoningText` helpers for `/v1/responses` calls.
 - `src/lib/chatCompletions.ts` — the same for `/v1/chat/completions`, used by models the platform serves only there (currently `qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash`), plus `toResponsesUsage` to normalize token counts for savings tracking.
 - `src/lib/auth.ts` — `getApiKey()` for authenticated requests.
+- `src/lib/request.ts` — plumbing for the endpoint commands: `requireApiKey`, `resolveInput` (argument or stdin), `parseJsonObject`, `postJson`, and the print helpers.
 
 ## Steps
 
