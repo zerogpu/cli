@@ -25,6 +25,7 @@ const CHAT_MODELS: Record<string, "responses" | "chat-completions"> = {
   "LFM2.5-1.2B-Thinking": "responses",
   "gpt-oss-120b": "responses",
   "llama-guard-4-12b": "responses",
+  "deepseek-v4.1-flash": "responses",
   "qwen3-30b-a3b-fp8": "chat-completions",
   "glm-5.2": "chat-completions",
   "deepseek-v4-flash-0731": "chat-completions",
