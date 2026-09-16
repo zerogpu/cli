@@ -158,6 +158,7 @@ zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash-0731
 | `LFM2.5-1.2B-Thinking` | Compact reasoning model. |
 | `gpt-oss-120b` | 120B MoE, 131K context, reasoning + function calling. |
 | `llama-guard-4-12b` | 12B dense, 164K context, brand safety + text moderation. |
+| `deepseek-v4.1-flash` | Sparse MoE (8B active on input, 16B on output), 1M context, long-context agentic work + function calling. |
 | `qwen3-30b-a3b-fp8` | 30B MoE, 100+ languages, reasoning + function calling. |
 | `glm-5.2` | 753B MoE, 262K context, reasoning + function calling. The platform's most capable model, and its priciest. |
 | `deepseek-v4-flash-0731` | 284B MoE (13B active), 1M context, coding and agentic workflows. |

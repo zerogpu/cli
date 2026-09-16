@@ -5,7 +5,7 @@
 `zerogpu-cli` is the official command-line interface for [ZeroGPU](https://zerogpu.ai), a distributed / edge inference platform for small language models (SLMs) and nano language models. The CLI is a thin, OpenAI-compatible client around the ZeroGPU **Responses API** (`https://api.zerogpu.ai/v1/responses`) — and, for models served only there, the **Chat Completions API** (`https://api.zerogpu.ai/v1/chat/completions`) — that lets you call a curated set of edge-optimized models directly from your terminal for common NLP workloads:
 
 - Conversational chat (`LFM2.5-1.2B-Instruct`, `LFM2.5-1.2B-Thinking`)
-- Reasoning and tool-use chat (`gpt-oss-120b`, `llama-guard-4-12b`, `qwen3-30b-a3b-fp8`, `glm-5.2`, `deepseek-v4-flash-0731`)
+- Reasoning and tool-use chat (`gpt-oss-120b`, `llama-guard-4-12b`, `deepseek-v4.1-flash`, `qwen3-30b-a3b-fp8`, `glm-5.2`, `deepseek-v4-flash-0731`)
 - IAB content/audience classification (`zlm-v1-iab-classify-edge`, `zlm-v2-iab-classify-edge-enriched`)
 - Domain-level IAB classification (`zlm-v1-iab-domain-classifier`)
 - Zero-shot classification (`deberta-v3-small`)
@@ -213,6 +213,7 @@ zerogpu chat <text> [-i <instructions>] [-m <model>] [-r]
 | `LFM2.5-1.2B-Thinking` | Responses | Compact reasoning model. |
 | `gpt-oss-120b` | Responses | 120B MoE, 131K context, reasoning + function calling. |
 | `llama-guard-4-12b` | Responses | 12B dense, 163,840-token context, brand safety + text moderation. |
+| `deepseek-v4.1-flash` | Responses | Sparse MoE (8B active on input, 16B on output), 1,048,576-token context, long-context agentic work + function calling. |
 | `qwen3-30b-a3b-fp8` | Chat Completions | 30B MoE, 100+ languages, reasoning + function calling. |
 | `glm-5.2` | Chat Completions | 753B MoE, 262,144-token context, reasoning + function calling. The most capable model on the platform, and the most expensive by an order of magnitude. |
 | `deepseek-v4-flash-0731` | Chat Completions | 284B MoE (13B active), 1,048,576-token context, coding and agentic workflows. |

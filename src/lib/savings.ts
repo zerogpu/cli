@@ -23,6 +23,7 @@ export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
   "gpt-oss-120b": { in: 0.15, out: 0.6 },
   "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
   "glm-5.2": { in: 1.1, out: 3.5 },
+  "deepseek-v4.1-flash": { in: 0.3, out: 1.2 },
   "deepseek-v4-flash-0731": { in: 0.16, out: 0.38 },
   "llama-guard-4-12b": { in: 0.18, out: 0.18 },
   "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
