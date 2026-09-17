@@ -1,6 +1,6 @@
 ---
 name: model-sync
-description: Reconcile the ZeroGPU CLI with the live model catalog API (https://api-dashboard.zerogpu.ai/api/models), which is the sole source of truth — add models the CLI is missing, correct every value that disagrees with it, and remove models it no longer returns, across `src/lib/savings.ts` (`ZGPU_PRICING`, `ZGPU_FALLBACK`), `tests/savings.test.ts`, the `chat --model` list in `src/commands/chat.ts`, every command's model constant, `README.md`, and `docs/DOCUMENTATION.md` / `docs/ADDING_COMMANDS.md` — then bump the version, cut a branch from `main`, commit, and open a PR automatically. Runs unattended — it never asks questions. Use this skill whenever the user asks to "check for new models", "which models is the CLI missing", "sync the model catalog", "fetch models from the dashboard API and compare", "add the new model to the CLI", "fix the pricing/context windows", or schedules a routine to keep the CLI's model set matched to what the API serves.
+description: Reconcile the ZeroGPU CLI with the live model catalog API (https://api-dashboard.zerogpu.ai/api/models), which is the sole source of truth — add models the CLI is missing, correct every value that disagrees with it, and remove models it no longer returns, so the CLI is fully in sync, across `src/lib/savings.ts` (`ZGPU_PRICING`, `ZGPU_FALLBACK`), `tests/savings.test.ts`, the `chat --model` list in `src/commands/chat.ts`, every command's model constant, `README.md`, and `docs/DOCUMENTATION.md` / `docs/ADDING_COMMANDS.md` — then bump the minor version (always minor, even for a removal), cut a branch from `main`, commit, and open a PR automatically. Runs unattended — it never asks questions. Use this skill whenever the user asks to "check for new models", "which models is the CLI missing", "sync the model catalog", "fetch models from the dashboard API and compare", "add the new model to the CLI", "fix the pricing/context windows", or schedules a routine to keep the CLI's model set matched to what the API serves.
 ---
 
 # Model sync
@@ -9,7 +9,9 @@ description: Reconcile the ZeroGPU CLI with the live model catalog API (https://
 
 **This skill runs unattended.** It asks nothing and waits for nothing. Every decision below is a rule with a determined answer, so a scheduled run and an interactive run do the same thing. When a rule leaves genuine slack — the wording of a new notes cell, where in a table to insert a row — pick the option most consistent with the surrounding file and note the choice in the final summary. Never end a run with an open question, a "should I…", or work deferred for a human.
 
-Work the three loops in order: **[correct](#1-correct-what-disagrees)**, **[add](#2-add-what-is-missing)**, **[remove](#3-remove-what-is-gone)**. Then [verify](#4-verify), and [bump, branch, and open a PR against `main`](#5-bump-branch-and-open-the-pr) — every run that changes a file ends in a PR, without being asked.
+**Fully in sync means both directions.** Every model the API returns is priced and callable from the CLI, and every model the CLI prices, lists, or calls is one the API returns. The sync adds, edits, renames, and removes models on its own to get there — no human decides what stays.
+
+Work the three loops in order: **[correct](#1-correct-what-disagrees)**, **[add](#2-add-what-is-missing)**, **[remove](#3-remove-what-is-gone)**. Then [verify](#4-verify), and [bump, branch, and open a PR against `main`](#5-bump-branch-and-open-the-pr) — every run that changes a file ends in a PR carrying a **minor** version bump, without being asked.
 
 ## Step 0 — audit
 
@@ -24,7 +26,7 @@ python3 .claude/skills/model-sync/scripts/audit-models.py
 | `MISSING` | a CLI surface has no entry for a model the API returns | you — [loop 2](#2-add-what-is-missing) |
 | `RENAME` | a CLI model id the API now serves under a longer id, plus every file to update | you — [renames](#renames) |
 | `ORPHAN` | a CLI model id the API does not return, plus every file to clean | you — [loop 3](#3-remove-what-is-gone) |
-| `NOTE` | a model no command calls (priced only) | nothing — the [task mapping](#task-mapping) says that is correct; list them in the summary |
+| `NOTE` | a non-chat model no task command calls — priced, and callable through the endpoint commands | nothing more — [2.3](#23-every-other-task--pricing-and-the-endpoint-commands) |
 
 Flags: `--fix` (rewrite drifting price entries), `--model <id>` (one model, repeatable), `--save` / `--json` (snapshot then re-run offline), `--strict` (exit 1 when anything is reported).
 
@@ -90,9 +92,9 @@ The payload does **not** say which endpoint a model is routable on, and a null `
 - For a model already in the CLI, its existing route — its `CHAT_MODELS` value, or the endpoint its command posts to — is authoritative. Never change a route because a sample body is present or absent.
 - For a **new** chat model, route it `responses` when `sample_responses_body` exists and `chat-completions` when it does not — then say so in the summary, since the route can be widened later once a Responses sample or an explicit confirmation exists.
 
-### 2.3 Every other task — pricing only
+### 2.3 Every other task — pricing and the endpoint commands
 
-A model whose task is not `Text Generation` gets [2.1](#21-pricing--every-model) and nothing more. The sync never creates a command: a command's name, flags, and request shape are product decisions, not catalog facts. List each such model in the summary as served by the API with no CLI command.
+A model whose task is not `Text Generation` gets [2.1](#21-pricing--every-model), and that makes it fully added: the endpoint commands already call any model by id — `zerogpu embeddings -m <id>` for `Text Embedding`, `zerogpu moderations -m <id>` for `Text Moderation`, `zerogpu chat_completions -m <id>` for everything else — so it is callable without a new command. Do not create a per-task command for it. List each such model in the summary with the endpoint command that calls it.
 
 ### 2.4 Re-audit that model
 
@@ -100,7 +102,7 @@ A model whose task is not `Text Generation` gets [2.1](#21-pricing--every-model)
 
 ## Renames
 
-A CLI id that an API id extends — `deepseek-v4-flash` in the CLI, `deepseek-v4-flash-0731` in the API — is the same model under a new id, provided exactly one API id extends it. The audit prints it as `RENAME` with every file under `REPLACE:`. Replace the old id with the new one in place: the pricing entry and its test (at the API's rates), the `CHAT_MODELS` key or command constant, table rows, `-m` examples, and prose — keeping positions and wording, then correct whatever values drifted with it. Do not keep the old id as an alias. A rename is not a removal plus an addition, and it counts as an addition for the [version bump](#5-bump-branch-and-open-the-pr).
+A CLI id that an API id extends — `deepseek-v4-flash` in the CLI, `deepseek-v4-flash-0731` in the API — is the same model under a new id, provided exactly one API id extends it. The audit prints it as `RENAME` with every file under `REPLACE:`. Replace the old id with the new one in place: the pricing entry and its test (at the API's rates), the `CHAT_MODELS` key or command constant, table rows, `-m` examples, and prose — keeping positions and wording, then correct whatever values drifted with it. Do not keep the old id as an alias. A rename is not a removal plus an addition.
 
 ## 3. Remove what is gone
 
@@ -133,7 +135,7 @@ There is no exemption list. A model the API does not return is not a ZeroGPU mod
 | `taskDisplayName` | CLI surfaces |
 | --- | --- |
 | `Text Generation` | pricing, `chat --model`, the `chat` Models tables and routing sentences |
-| every other task — `Summarization`, `Text Classification`, `Text Moderation`, `PII`, `Text Embedding`, and any new one | pricing only; a command calls it only when its `MODEL` constant already names it |
+| every other task — `Summarization`, `Text Classification`, `Text Moderation`, `PII`, `Text Embedding`, and any new one | pricing; callable through the endpoint commands; a task command calls it only when its `MODEL` constant already names it |
 
 The endpoint commands — `responses`, `chat_completions`, `moderations`, `embeddings` — take the model from `-m` and hold no model list. That is deliberate: it is what keeps the agent plugins working across model changes without a CLI release. Never add a model list, route, or validation to them, and never delete them in [loop 3](#3-remove-what-is-gone); they have no model to lose. Model ids in their doc examples follow the normal rename and removal rules.
 
@@ -146,7 +148,7 @@ API-sourced facts only: id, task, `maxTokens`, input/output price, parameter cou
 Verification gates the PR: nothing is pushed until all of it passes.
 
 ```bash
-python3 .claude/skills/model-sync/scripts/audit-models.py --strict   # expect: only NOTE lines
+python3 .claude/skills/model-sync/scripts/audit-models.py --strict   # expect: 0 finding(s) (NOTE lines are fine)
 npm ci
 npm run lint
 npm run build
@@ -180,11 +182,10 @@ Cutting from `origin/main` makes the branch unique per run and independent of wh
 
 ```bash
 # 2. bump the version — merging to main publishes it to npm (RELEASING.md)
-npm run bump:minor   # the run added a model to `chat --model`, by addition or rename
-npm run bump         # everything else: prices, notes, removals
+npm run bump:minor   # every run — always minor
 ```
 
-Exactly one bump per run. Removals are a patch: a model the API no longer serves already fails at request time, so dropping it changes an error, not working behaviour. Both scripts rewrite `package.json` and `package-lock.json` and nothing else; commit both.
+Exactly one bump per run, and it is **always minor** — whatever the run did: adding a model, renaming one, removing one or a whole command, or correcting a single price. Never `npm run bump` (patch) and never a major bump, even for a removal. The script rewrite `package.json` and `package-lock.json` and nothing else; commit both.
 
 ```bash
 # 3. stage only what the sync touched — never `git add -A`
@@ -219,7 +220,7 @@ git push -u origin "$BRANCH"
 gh pr create --base main --head "$BRANCH" \
   --title "chore: sync models with dashboard API" \
   --body "$(cat <<'EOF'
-Automated model-catalog sync. The dashboard API is the source of truth; every value below was taken from it. Merging publishes vX.Y.Z to npm.
+Automated model-catalog sync. The dashboard API is the source of truth; every value below was taken from it. Merging publishes vX.Y.Z (a minor bump — every sync is) to npm.
 
 ## Corrected
 | Model | Field | Was | Now |
@@ -231,7 +232,7 @@ Automated model-catalog sync. The dashboard API is the source of truth; every va
 <model — pricing and docs dropped; command deleted>
 
 ## Verification
-- `audit-models.py --strict` — clean apart from NOTE lines
+- `audit-models.py --strict` — 0 findings
 - `npm run lint`, `npm run build`, `npm test` pass
 - `zerogpu chat --help` lists exactly the API's Text Generation models
 
@@ -253,4 +254,4 @@ Rules for this step:
 
 ## 6. Report
 
-One pass, no questions: prices corrected, notes and prose rewritten, models renamed, added, and removed, commands deleted, the version bump and why, models priced with no command, any notes claim that could not be sourced, and the PR URL (or the branch name and the exact error if the PR could not be opened).
+One pass, no questions: prices corrected, notes and prose rewritten, models renamed, added, and removed, commands deleted, the minor version bump, non-chat models added with the endpoint command that calls each, any notes claim that could not be sourced, and the PR URL (or the branch name and the exact error if the PR could not be opened).
