@@ -8,7 +8,7 @@ Reports, per model:
   * MISSING — a CLI surface with no entry for the model
   * DRIFT   — a price entry that disagrees with the API (rewritten by --fix)
   * PROSE   — a docs table note or sentence stating a stale fact, with file:line
-  * NOTE    — a model no command calls (priced only)
+  * NOTE    — a non-chat model no task command calls (priced; callable through an endpoint command)
   * RENAME  — a CLI model id the API now serves under a longer id, plus every file to update
   * ORPHAN  — a CLI model id the API does not return, plus every file to clean
 
@@ -35,7 +35,7 @@ import urllib.request
 API_URL = "https://api-dashboard.zerogpu.ai/api/models"
 
 # API taskDisplayName values whose models `zerogpu chat --model` accepts. Every other
-# task is priced only — see the task mapping in SKILL.md.
+# task is priced and called through the endpoint commands — see the task mapping in SKILL.md.
 CHAT_TASKS = {"Text Generation"}
 
 PRICING = "src/lib/savings.ts"
@@ -420,7 +420,8 @@ def main():
         # --- commands ---------------------------------------------------------
         users = [c[1] for c in commands if c[2] == mid]
         if not users and mid not in chat_models and task not in CHAT_TASKS:
-            notes.append(f"no command calls it (task '{task}') — priced only")
+            endpoint = {"Text Embedding": "embeddings", "Text Moderation": "moderations"}.get(task, "chat_completions")
+            notes.append(f"no task command calls it (task '{task}') — priced; callable as `zerogpu {endpoint} -m {mid}`")
 
         prose = sorted(set(prose))
         if not (missing or drift or prose):
