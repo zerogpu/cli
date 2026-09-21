@@ -52,7 +52,7 @@ describe("computeCallSavings", () => {
     );
     expect(tokens).toBe(1020);
     const claude = (740 * 5 + 280 * 25) / 1e6; // 0.0107
-    const zgpu = (740 * 0.02 + 280 * 0.05) / 1e6; // real ZeroGPU cost
+    const zgpu = (740 * 0.15 + 280 * 0.28) / 1e6; // real ZeroGPU cost
     expect(savingsUsd).toBeCloseTo(claude - zgpu, 8);
   });
 
@@ -93,7 +93,6 @@ describe("computeCallSavings", () => {
       "gpt-oss-120b",
       "qwen3-30b-a3b-fp8",
       "glm-5.2",
-      "deepseek-v4-flash-0731",
       "LFM2.5-1.2B-Instruct",
     ]) {
       expect(unknown).toBeLessThanOrEqual(
@@ -112,12 +111,15 @@ describe("ZGPU_PRICING tracks the published model catalog", () => {
   // gpt-oss-120b sat at $0.03/$0.10 long after it was repriced to $0.15/$0.60.
   const CATALOG: Record<string, { in: number; out: number }> = {
     "gpt-oss-120b": { in: 0.15, out: 0.6 },
-    "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
+    "qwen3-30b-a3b-fp8": { in: 0.1, out: 0.45 },
     "glm-5.2": { in: 1.1, out: 3.5 },
-    "deepseek-v4.1-flash": { in: 0.3, out: 1.2 },
-    "deepseek-v4-flash-0731": { in: 0.16, out: 0.38 },
+    "deepseek-v4.1-flash": { in: 0.14, out: 0.57 },
+    "glm-5.3-flash": { in: 0.1, out: 0.35 },
+    "gpt-5.6-luna": { in: 0.2, out: 1.2 },
+    "gpt-4.1-mini": { in: 0.4, out: 1.6 },
+    "gpt-5.4-nano": { in: 0.2, out: 1.25 },
     "llama-guard-4-12b": { in: 0.18, out: 0.18 },
-    "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
+    "llama-3.1-8b-instruct-fast": { in: 0.15, out: 0.28 },
     "zlm-v2-iab-classify-edge-enriched": { in: 0.025, out: 0.15 },
     "zlm-v1-iab-classify-edge": { in: 0.02, out: 0.05 },
     "zlm-v1-iab-domain-classifier": { in: 0.02, out: 0.05 },
