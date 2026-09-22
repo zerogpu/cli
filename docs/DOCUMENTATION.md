@@ -5,7 +5,7 @@
 `zerogpu-cli` is the official command-line interface for [ZeroGPU](https://zerogpu.ai), a distributed / edge inference platform for small language models (SLMs) and nano language models. The CLI is a thin, OpenAI-compatible client around the ZeroGPU **Responses API** (`https://api.zerogpu.ai/v1/responses`) — and, for models served only there, the **Chat Completions API** (`https://api.zerogpu.ai/v1/chat/completions`) — that lets you call a curated set of edge-optimized models directly from your terminal for common NLP workloads:
 
 - Conversational chat (`LFM2.5-1.2B-Instruct`, `LFM2.5-1.2B-Thinking`)
-- Reasoning and tool-use chat (`gpt-oss-120b`, `llama-guard-4-12b`, `deepseek-v4.1-flash`, `qwen3-30b-a3b-fp8`, `glm-5.2`, `deepseek-v4-flash-0731`)
+- Reasoning and tool-use chat (`gpt-oss-120b`, `llama-guard-4-12b`, `deepseek-v4.1-flash`, `glm-5.3-flash`, `gpt-5.6-luna`, `gpt-4.1-mini`, `gpt-5.4-nano`, `qwen3-30b-a3b-fp8`, `glm-5.2`)
 - IAB content/audience classification (`zlm-v1-iab-classify-edge`, `zlm-v2-iab-classify-edge-enriched`)
 - Domain-level IAB classification (`zlm-v1-iab-domain-classifier`)
 - Zero-shot classification (`deberta-v3-small`)
@@ -214,11 +214,14 @@ zerogpu chat <text> [-i <instructions>] [-m <model>] [-r]
 | `gpt-oss-120b` | Responses | 120B MoE, 131K context, reasoning + function calling. |
 | `llama-guard-4-12b` | Responses | 12B dense, 163,840-token context, brand safety + text moderation. |
 | `deepseek-v4.1-flash` | Responses | Sparse MoE (8B active on input, 16B on output), 1,048,576-token context, long-context agentic work + function calling. |
+| `glm-5.3-flash` | Responses | Hybrid sparse + linear attention, 1,048,576-token context, coding and long-horizon agentic work + function calling. |
+| `gpt-5.6-luna` | Responses | Cost-optimized GPT-5.6, 272,000-token context, coding, chat, function calling, reasoning, RAG, summarization + translation. |
+| `gpt-4.1-mini` | Responses | Fast, cost-efficient GPT-4.1, 1,047,576-token context, coding, chat, function calling, reasoning, RAG, summarization + translation. |
+| `gpt-5.4-nano` | Responses | Most cost-efficient GPT-5.4, 400,000-token context, coding, chat, function calling, reasoning, RAG, summarization + translation. |
 | `qwen3-30b-a3b-fp8` | Chat Completions | 30B MoE, 100+ languages, reasoning + function calling. |
 | `glm-5.2` | Chat Completions | 753B MoE, 262,144-token context, reasoning + function calling. The most capable model on the platform, and the most expensive by an order of magnitude. |
-| `deepseek-v4-flash-0731` | Chat Completions | 284B MoE (13B active), 1,048,576-token context, coding and agentic workflows. |
 
-`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash-0731` have no Responses endpoint, so the CLI posts them to `/v1/chat/completions` instead, mapping `--instructions` to a `system` message and normalizing `prompt_tokens` / `completion_tokens` back to Responses token names for savings tracking. This routing is transparent — the command and its output are identical either way.
+`qwen3-30b-a3b-fp8` and `glm-5.2` have no Responses endpoint, so the CLI posts them to `/v1/chat/completions` instead, mapping `--instructions` to a `system` message and normalizing `prompt_tokens` / `completion_tokens` back to Responses token names for savings tracking. This routing is transparent — the command and its output are identical either way.
 
 **Example**
 ```bash
@@ -815,7 +818,7 @@ Content-Type: application/json
 x-api-key:    <ZEROGPU_API_KEY>
 ```
 
-The exceptions are `summarize`, `chat --model qwen3-30b-a3b-fp8`, `chat --model glm-5.2`, and `chat --model deepseek-v4-flash-0731`, whose models the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
+The exceptions are `summarize`, `chat --model qwen3-30b-a3b-fp8`, and `chat --model glm-5.2`, whose models the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
 
 ```
 POST https://api.zerogpu.ai/v1/chat/completions

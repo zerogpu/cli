@@ -141,9 +141,6 @@ zerogpu chat "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
 
 # A 262K-token context, for whole repos and very long documents
 zerogpu chat "$(cat ARCHITECTURE.md)" -m glm-5.2
-
-# Coding and agentic work, at a fraction of the flagship price
-zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash-0731
 ```
 
 | Option | Description |
@@ -159,11 +156,14 @@ zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash-0731
 | `gpt-oss-120b` | 120B MoE, 131K context, reasoning + function calling. |
 | `llama-guard-4-12b` | 12B dense, 164K context, brand safety + text moderation. |
 | `deepseek-v4.1-flash` | Sparse MoE (8B active on input, 16B on output), 1M context, long-context agentic work + function calling. |
+| `glm-5.3-flash` | Hybrid sparse + linear attention, 1M context, coding and long-horizon agentic work + function calling. |
+| `gpt-5.6-luna` | Cost-optimized GPT-5.6, 272K context, coding, chat, function calling, reasoning, RAG, summarization + translation. |
+| `gpt-4.1-mini` | Fast, cost-efficient GPT-4.1, 1M context, coding, chat, function calling, reasoning, RAG, summarization + translation. |
+| `gpt-5.4-nano` | Most cost-efficient GPT-5.4, 400K context, coding, chat, function calling, reasoning, RAG, summarization + translation. |
 | `qwen3-30b-a3b-fp8` | 30B MoE, 100+ languages, reasoning + function calling. |
 | `glm-5.2` | 753B MoE, 262K context, reasoning + function calling. The platform's most capable model, and its priciest. |
-| `deepseek-v4-flash-0731` | 284B MoE (13B active), 1M context, coding and agentic workflows. |
 
-`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash-0731` are served by the Chat Completions API rather than the Responses API; the CLI routes them automatically.
+`qwen3-30b-a3b-fp8` and `glm-5.2` are served by the Chat Completions API rather than the Responses API; the CLI routes them automatically.
 
 #### `chat_thinking`
 

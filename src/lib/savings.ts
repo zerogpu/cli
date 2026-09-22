@@ -21,12 +21,15 @@ const DEFAULT_BASELINE = "claude-opus-4-8";
 // this table to the published catalog — see tests/savings.test.ts.
 export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
   "gpt-oss-120b": { in: 0.15, out: 0.6 },
-  "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
+  "qwen3-30b-a3b-fp8": { in: 0.1, out: 0.45 },
   "glm-5.2": { in: 1.1, out: 3.5 },
-  "deepseek-v4.1-flash": { in: 0.3, out: 1.2 },
-  "deepseek-v4-flash-0731": { in: 0.16, out: 0.38 },
+  "deepseek-v4.1-flash": { in: 0.14, out: 0.57 },
+  "glm-5.3-flash": { in: 0.1, out: 0.35 },
+  "gpt-5.6-luna": { in: 0.2, out: 1.2 },
+  "gpt-4.1-mini": { in: 0.4, out: 1.6 },
+  "gpt-5.4-nano": { in: 0.2, out: 1.25 },
   "llama-guard-4-12b": { in: 0.18, out: 0.18 },
-  "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
+  "llama-3.1-8b-instruct-fast": { in: 0.15, out: 0.28 },
   "zlm-v1-iab-classify-edge": { in: 0.02, out: 0.05 },
   "zlm-v2-iab-classify-edge-enriched": { in: 0.025, out: 0.15 },
   "zlm-v1-iab-domain-classifier": { in: 0.02, out: 0.05 },
@@ -37,6 +40,9 @@ export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
   "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
   "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
   "zlm-v1-moderation-edge": { in: 0.02, out: 0.05 },
+  // Audio models: the catalog publishes $0 in and $0 out for both.
+  "whisper-tiny": { in: 0, out: 0 },
+  "chatterbox-nano": { in: 0, out: 0 },
   // Embedding models bill input tokens only; there are no output tokens to
   // charge, so `out: 0` is the real rate, not a placeholder.
   "all-minilm-l6-v2": { in: 0.004, out: 0 },

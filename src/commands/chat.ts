@@ -17,8 +17,8 @@ import { recordAndMaybeNotify } from "../lib/savings.js";
 const DEFAULT_MODEL = "LFM2.5-1.2B-Instruct";
 
 // Text-generation models `--model` accepts, and the API each one speaks.
-// qwen3-30b-a3b-fp8, glm-5.2, and deepseek-v4-flash-0731 are Chat Completions
-// only — they have no Responses endpoint.
+// qwen3-30b-a3b-fp8 and glm-5.2 are Chat Completions only — they have no
+// Responses endpoint.
 // Source: https://docs.zerogpu.ai/docs/text-generation
 const CHAT_MODELS: Record<string, "responses" | "chat-completions"> = {
   "LFM2.5-1.2B-Instruct": "responses",
@@ -26,9 +26,12 @@ const CHAT_MODELS: Record<string, "responses" | "chat-completions"> = {
   "gpt-oss-120b": "responses",
   "llama-guard-4-12b": "responses",
   "deepseek-v4.1-flash": "responses",
+  "glm-5.3-flash": "responses",
+  "gpt-5.6-luna": "responses",
+  "gpt-4.1-mini": "responses",
+  "gpt-5.4-nano": "responses",
   "qwen3-30b-a3b-fp8": "chat-completions",
   "glm-5.2": "chat-completions",
-  "deepseek-v4-flash-0731": "chat-completions",
 };
 
 // Model ids are case-sensitive to the API but not to the person typing them.
