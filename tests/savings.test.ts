@@ -130,6 +130,9 @@ describe("ZGPU_PRICING tracks the published model catalog", () => {
     "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
     "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
     "zlm-v1-moderation-edge": { in: 0.02, out: 0.05 },
+    // Audio models: the catalog publishes $0 in and $0 out for both.
+    "whisper-tiny": { in: 0, out: 0 },
+    "chatterbox-nano": { in: 0, out: 0 },
     "all-minilm-l6-v2": { in: 0.004, out: 0 },
     "bge-small-en-v1.5": { in: 0.004, out: 0 },
   };

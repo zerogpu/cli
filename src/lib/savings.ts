@@ -40,6 +40,9 @@ export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
   "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
   "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
   "zlm-v1-moderation-edge": { in: 0.02, out: 0.05 },
+  // Audio models: the catalog publishes $0 in and $0 out for both.
+  "whisper-tiny": { in: 0, out: 0 },
+  "chatterbox-nano": { in: 0, out: 0 },
   // Embedding models bill input tokens only; there are no output tokens to
   // charge, so `out: 0` is the real rate, not a placeholder.
   "all-minilm-l6-v2": { in: 0.004, out: 0 },
