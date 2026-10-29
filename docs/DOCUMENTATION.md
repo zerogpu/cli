@@ -5,13 +5,10 @@
 `zerogpu-cli` is the official command-line interface for [ZeroGPU](https://zerogpu.ai), a distributed / edge inference platform for small language models (SLMs) and nano language models. The CLI is a thin, OpenAI-compatible client around the ZeroGPU **Responses API** (`https://api.zerogpu.ai/v1/responses`) — and, for models served only there, the **Chat Completions API** (`https://api.zerogpu.ai/v1/chat/completions`) — that lets you call a curated set of edge-optimized models directly from your terminal for common NLP workloads:
 
 - Conversational chat (`LFM2.5-1.2B-Instruct`, `LFM2.5-1.2B-Thinking`)
-- Reasoning and tool-use chat (`gpt-oss-120b`, `llama-guard-4-12b`, `deepseek-v4.1-flash`, `qwen3-30b-a3b-fp8`, `glm-5.2`, `deepseek-v4-flash-0731`)
+- Reasoning and tool-use chat (`gpt-oss-120b`, `llama-guard-4-12b`, `deepseek-v4.1-flash`, `glm-5.3-flash`, `gpt-4.1-mini`, `gpt-6-luna`, `gpt-5.6-luna`, `gpt-5.4-nano`, `qwen3.6-35b-a3b`, `zlm-v1-tool-decisions`, `qwen3-30b-a3b-fp8`)
 - IAB content/audience classification (`zlm-v1-iab-classify-edge`, `zlm-v2-iab-classify-edge-enriched`)
 - Domain-level IAB classification (`zlm-v1-iab-domain-classifier`)
 - Zero-shot classification (`deberta-v3-small`)
-- Structured / schema-driven classification and JSON extraction (`gliner2-base-v1`)
-- Named-entity recognition with custom labels (`gliner2-base-v1`)
-- PII extraction & redaction (`gliner-multi-pii-v1`)
 - Text summarization (`llama-3.1-8b-instruct-fast`)
 
 It is written in TypeScript (ESM, Node ≥ 20), built on [`commander`](https://github.com/tj/commander.js), and ships a single executable: `zerogpu`.
@@ -95,19 +92,14 @@ The CLI exposes the following commands:
 | [`classify_iab`](#45-classify_iab) | IAB taxonomy classification |
 | [`classify_iab_enriched`](#46-classify_iab_enriched) | IAB enriched (topics / keywords / intent) |
 | [`classify_zero_shot`](#47-classify_zero_shot) | Zero-shot classification against candidate labels |
-| [`classify_structured`](#48-classify_structured) | Schema-based multi-category classification |
-| [`extract_entities`](#49-extract_entities) | Custom-label NER |
-| [`extract_pii`](#410-extract_pii) | Extract PII entities |
-| [`redact_pii`](#411-redact_pii) | Mask PII in-line in the text |
-| [`extract_json`](#412-extract_json) | Schema-driven structured JSON extraction |
-| [`summarize`](#413-summarize) | Summarize text with `llama-3.1-8b-instruct-fast` |
-| [`classify_domain`](#414-classify_domain) | Domain-level IAB classification |
-| [`responses`](#415-responses) | Call `/v1/responses` with any model |
-| [`chat_completions`](#416-chat_completions) | Call `/v1/chat/completions` with any model |
-| [`moderations`](#417-moderations) | Call `/v1/moderations` with any model |
-| [`embeddings`](#418-embeddings) | Call `/v1/embeddings` with any model |
+| [`summarize`](#48-summarize) | Summarize text with `llama-3.1-8b-instruct-fast` |
+| [`classify_domain`](#49-classify_domain) | Domain-level IAB classification |
+| [`responses`](#410-responses) | Call `/v1/responses` with any model |
+| [`chat_completions`](#411-chat_completions) | Call `/v1/chat/completions` with any model |
+| [`moderations`](#412-moderations) | Call `/v1/moderations` with any model |
+| [`embeddings`](#413-embeddings) | Call `/v1/embeddings` with any model |
 
-Commands 4.1–4.14 each wrap one task and pin its model. The endpoint commands, 4.15–4.18, take the model from `--model` and keep no model list, so a model the platform adds or renames works with them without a CLI release.
+Commands 4.1–4.9 each wrap one task and pin its model. The endpoint commands, 4.10–4.13, take the model from `--model` and keep no model list, so a model the platform adds or renames works with them without a CLI release.
 
 ### Common exit codes
 | Code | Meaning |
@@ -214,11 +206,16 @@ zerogpu chat <text> [-i <instructions>] [-m <model>] [-r]
 | `gpt-oss-120b` | Responses | 120B MoE, 131K context, reasoning + function calling. |
 | `llama-guard-4-12b` | Responses | 12B dense, 163,840-token context, brand safety + text moderation. |
 | `deepseek-v4.1-flash` | Responses | Sparse MoE (8B active on input, 16B on output), 1,048,576-token context, long-context agentic work + function calling. |
+| `glm-5.3-flash` | Responses | 1,048,576-token context, coding and long-horizon agent work + function calling. |
+| `gpt-4.1-mini` | Responses | 1,047,576-token context, coding + function calling, with structured outputs. |
+| `gpt-6-luna` | Responses | 272,000-token context, reasoning + function calling, text and image input. |
+| `gpt-5.6-luna` | Responses | 272,000-token context, cost-optimized reasoning + function calling. |
+| `gpt-5.4-nano` | Responses | 400,000-token context, classification, extraction, and routing + function calling. |
+| `qwen3.6-35b-a3b` | Responses | 35B MoE, 16,384-token context, multimodal chat — document, image, and video analysis + data extraction. |
+| `zlm-v1-tool-decisions` | Responses | 0.6B, 24,576-token context, MCP tool selection and argument generation for agents. |
 | `qwen3-30b-a3b-fp8` | Chat Completions | 30B MoE, 100+ languages, reasoning + function calling. |
-| `glm-5.2` | Chat Completions | 753B MoE, 262,144-token context, reasoning + function calling. The most capable model on the platform, and the most expensive by an order of magnitude. |
-| `deepseek-v4-flash-0731` | Chat Completions | 284B MoE (13B active), 1,048,576-token context, coding and agentic workflows. |
 
-`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash-0731` have no Responses endpoint, so the CLI posts them to `/v1/chat/completions` instead, mapping `--instructions` to a `system` message and normalizing `prompt_tokens` / `completion_tokens` back to Responses token names for savings tracking. This routing is transparent — the command and its output are identical either way.
+`qwen3-30b-a3b-fp8` has no Responses endpoint, so the CLI posts it to `/v1/chat/completions` instead, mapping `--instructions` to a `system` message and normalizing `prompt_tokens` / `completion_tokens` back to Responses token names for savings tracking. This routing is transparent — the command and its output are identical either way.
 
 **Example**
 ```bash
@@ -377,206 +374,7 @@ zerogpu classify_zero_shot "I love how fast this laptop boots up." \
 
 ---
 
-### 4.8 `classify_structured`
-
-Schema-driven classification using `gliner2-base-v1`.
-
-**Synopsis**
-```
-zerogpu classify_structured <text> -s <json>
-```
-
-**Parameters**
-
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `text` (positional) | string | yes | Text to classify. |
-| `-s`, `--schema <json>` | JSON string | **yes** | JSON object mapping a category name to its allowed labels, e.g. `'{"sentiment":["positive","negative","neutral"]}'`. Multiple categories supported. |
-
-**Example**
-```bash
-zerogpu classify_structured "Support replied quickly but the fix didn't work." \
-  -s '{"sentiment":["positive","negative","neutral"],"topic":["support","billing","product"]}'
-```
-
-**Expected output (illustrative)**
-```json
-{ "sentiment": "negative", "topic": "support" }
-```
-
-**Outcomes**
-
-| Outcome | Exit |
-|---|---|
-| Success | `0` |
-| `--schema` is not valid JSON | `1` — `Invalid --schema JSON: <message>` |
-| Not signed in / network / HTTP / empty content | `1` |
-
----
-
-### 4.9 `extract_entities`
-
-Custom-label NER with `gliner2-base-v1`.
-
-**Synopsis**
-```
-zerogpu extract_entities <text> (-l <label>...|--labels a,b,c) [-t <number>]
-```
-
-**Parameters**
-
-| Name | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `text` (positional) | string | yes | — | Source text. |
-| `-l`, `--label <label>` | string | one of `-l`/`--labels` | — | Entity label to extract. Repeatable. |
-| `--labels <labels>` | string | one of `-l`/`--labels` | — | Comma-separated list of labels. |
-| `-t`, `--threshold <number>` | float in [0, 1] | optional | `0.3` | Minimum confidence for returned spans. |
-
-**Example**
-```bash
-zerogpu extract_entities \
-  "Apple CEO Tim Cook met with Sundar Pichai in Cupertino on Monday." \
-  --labels person,organization,location -t 0.4
-```
-
-**Expected output (illustrative)**
-```json
-[
-  { "label": "organization", "text": "Apple", "score": 0.98 },
-  { "label": "person", "text": "Tim Cook", "score": 0.97 },
-  { "label": "person", "text": "Sundar Pichai", "score": 0.96 },
-  { "label": "location", "text": "Cupertino", "score": 0.91 }
-]
-```
-
-**Outcomes**
-
-| Outcome | Exit |
-|---|---|
-| Success | `0` |
-| No labels supplied | `1` — `At least one label is required.` |
-| Threshold not in `[0, 1]` or not a number | `1` — `--threshold must be a number between 0 and 1.` |
-| Not signed in / network / HTTP / empty content | `1` |
-
----
-
-### 4.10 `extract_pii`
-
-Extract PII entities with `gliner-multi-pii-v1`.
-
-**Synopsis**
-```
-zerogpu extract_pii <text> [-t <number>] [-c <list>]
-```
-
-**Parameters**
-
-| Name | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `text` (positional) | string | yes | — | Source text. |
-| `-t`, `--threshold <number>` | float | optional | `0.5` | Minimum confidence for returned entities. |
-| `-c`, `--categories <list>` | comma-separated string | optional | `identity,contact` | PII categories to extract. |
-
-**Example**
-```bash
-zerogpu extract_pii \
-  "Contact Jane Doe at jane@example.com or +1 (415) 555-1212." \
-  -t 0.6 -c identity,contact,financial
-```
-
-**Expected output (illustrative)**
-```json
-[
-  { "category": "identity", "label": "person", "text": "Jane Doe", "score": 0.96 },
-  { "category": "contact",  "label": "email",  "text": "jane@example.com", "score": 0.99 },
-  { "category": "contact",  "label": "phone",  "text": "+1 (415) 555-1212", "score": 0.95 }
-]
-```
-
-**Outcomes**
-
-| Outcome | Exit |
-|---|---|
-| Success | `0` |
-| `--threshold` not a finite number | `1` — `Invalid threshold: <value>` |
-| Not signed in / network / HTTP / empty content | `1` |
-
----
-
-### 4.11 `redact_pii`
-
-Detect and mask PII in-line in the text, using `gliner-multi-pii-v1` with `mask: "label"`.
-
-**Synopsis**
-```
-zerogpu redact_pii <text>
-```
-
-**Parameters**
-
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `text` (positional) | string | yes | Source text whose PII should be masked with label placeholders. |
-
-**Example**
-```bash
-zerogpu redact_pii "Email John Smith at john@acme.com about invoice 12345."
-```
-
-**Expected output (illustrative)**
-```
-Email [PERSON] at [EMAIL] about invoice 12345.
-```
-
-**Outcomes** — same as the common table.
-
----
-
-### 4.12 `extract_json`
-
-Schema-driven structured-JSON extraction with `gliner2-base-v1`.
-
-**Synopsis**
-```
-zerogpu extract_json <text> -s <json>
-```
-
-**Parameters**
-
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `text` (positional) | string | yes | Source text. |
-| `-s`, `--schema <json>` | JSON string | **yes** | Field schema, e.g. `'{"contact":["name::str::Full name","email::str::Email address"]}'`. Per-field syntax: `name::type::description`. |
-
-**Example**
-```bash
-zerogpu extract_json \
-  "Reach Maria Lopez at maria.lopez@acme.io or 415-555-0188." \
-  -s '{"contact":["name::str::Full name","email::str::Email address","phone::str::Phone number"]}'
-```
-
-**Expected output (illustrative)**
-```json
-{
-  "contact": {
-    "name": "Maria Lopez",
-    "email": "maria.lopez@acme.io",
-    "phone": "415-555-0188"
-  }
-}
-```
-
-**Outcomes**
-
-| Outcome | Exit |
-|---|---|
-| Success | `0` |
-| `--schema` is not valid JSON | `1` — `Invalid --schema JSON: <message>` |
-| Not signed in / network / HTTP / empty content | `1` |
-
----
-
-### 4.13 `summarize`
+### 4.8 `summarize`
 
 Summarize text with `llama-3.1-8b-instruct-fast`.
 
@@ -605,7 +403,7 @@ A single condensed summary string.
 
 ---
 
-### 4.14 `classify_domain`
+### 4.9 `classify_domain`
 
 Classify a domain name against the IAB taxonomy using `zlm-v1-iab-domain-classifier`. It infers the categories that characterize a site as a whole from the hostname alone — no crawl, no page text — which keeps payloads roughly 10x smaller than page-level classification. Use it for bidstream enrichment, allow/deny-list scoring, and inventory-level targeting; when you have the page text and need per-URL precision, use [`classify_iab`](#45-classify_iab) instead.
 
@@ -646,7 +444,7 @@ zerogpu classify_domain nytimes.com
 
 ---
 
-### 4.15 `responses`
+### 4.10 `responses`
 
 Call the Responses API with any model. The model id is sent exactly as given — the CLI does not check it against a list, so the API decides whether it exists.
 
@@ -674,7 +472,7 @@ zerogpu responses [text] -m <model> [-i <instructions>] [--metadata <json>] [--b
 **Example**
 ```bash
 zerogpu responses "Email John Smith at john@acme.com about invoice 12345." \
-  -m gliner-multi-pii-v1 --metadata '{"usecase":"redact","mask":"label"}'
+  -m gliner2.5-multi-v1 --metadata '{"usecase":"redact","mask":"label"}'
 
 zerogpu responses -m zlm-v1-iab-classify-edge < article.txt
 ```
@@ -700,7 +498,7 @@ Email [PERSON] at [EMAIL] about invoice 12345.
 
 ---
 
-### 4.16 `chat_completions`
+### 4.11 `chat_completions`
 
 Call the Chat Completions API with any model. Alias: `chat-completions`.
 
@@ -728,7 +526,7 @@ zerogpu chat_completions [text] -m <model> [-i <instructions>] [--metadata <json
 **Example**
 ```bash
 zerogpu chat_completions "The application is built with Python 3.11 and uses PostgreSQL 15." \
-  -m gliner2-base-v1 \
+  -m gliner2.5-base-v1 \
   --metadata '{"usecase":"ner","labels":["programming language","database"],"threshold":0.3}'
 ```
 
@@ -743,11 +541,11 @@ zerogpu chat_completions "The application is built with Python 3.11 and uses Pos
 }
 ```
 
-**Outcomes** — as for [`responses`](#415-responses), except a response with no message content exits `1` with `Response did not contain any message content.` + raw JSON dump.
+**Outcomes** — as for [`responses`](#410-responses), except a response with no message content exits `1` with `Response did not contain any message content.` + raw JSON dump.
 
 ---
 
-### 4.17 `moderations`
+### 4.12 `moderations`
 
 Call the Moderations API with any model and print the response.
 
@@ -771,11 +569,11 @@ zerogpu moderations "Screen this comment before we publish it." -m zlm-v1-modera
 
 **Expected output** — the moderations response as JSON: `results[].flagged`, `results[].categories`, and `results[].category_scores`.
 
-**Outcomes** — as for [`responses`](#415-responses); there is no content to extract, so a successful response is always printed.
+**Outcomes** — as for [`responses`](#410-responses); there is no content to extract, so a successful response is always printed.
 
 ---
 
-### 4.18 `embeddings`
+### 4.13 `embeddings`
 
 Call the Embeddings API with any model and print the response.
 
@@ -799,13 +597,13 @@ zerogpu embeddings "ZeroGPU runs small models at the edge." -m all-minilm-l6-v2
 
 **Expected output** — the embeddings response as JSON: `data[].embedding` holds the vector and `usage` the input tokens.
 
-**Outcomes** — as for [`moderations`](#417-moderations).
+**Outcomes** — as for [`moderations`](#412-moderations).
 
 ---
 
 ## 5. Network & API Contract
 
-The endpoint commands (4.15–4.18) POST to the endpoint they are named for — `/v1/responses`, `/v1/chat/completions`, `/v1/moderations`, `/v1/embeddings` — with the headers below. The rest of this section describes the task commands.
+The endpoint commands (4.10–4.13) POST to the endpoint they are named for — `/v1/responses`, `/v1/chat/completions`, `/v1/moderations`, `/v1/embeddings` — with the headers below. The rest of this section describes the task commands.
 
 All inference commands POST to:
 
@@ -815,7 +613,7 @@ Content-Type: application/json
 x-api-key:    <ZEROGPU_API_KEY>
 ```
 
-The exceptions are `summarize`, `chat --model qwen3-30b-a3b-fp8`, `chat --model glm-5.2`, and `chat --model deepseek-v4-flash-0731`, whose models the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
+The exceptions are `summarize` and `chat --model qwen3-30b-a3b-fp8`, whose models the ZeroGPU platform serves only through the OpenAI-compatible Chat Completions endpoint:
 
 ```
 POST https://api.zerogpu.ai/v1/chat/completions
