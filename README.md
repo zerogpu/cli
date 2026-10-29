@@ -25,13 +25,7 @@ The official command-line interface for [ZeroGPU](https://zerogpu.ai) — run fa
     - [`classify_iab`](#classify_iab)
     - [`classify_iab_enriched`](#classify_iab_enriched)
     - [`classify_domain`](#classify_domain)
-    - [`classify_structured`](#classify_structured)
     - [`classify_zero_shot`](#classify_zero_shot)
-  - [Extraction](#extraction)
-    - [`extract_entities`](#extract_entities)
-    - [`extract_json`](#extract_json)
-    - [`extract_pii`](#extract_pii)
-    - [`redact_pii`](#redact_pii)
   - [Endpoints](#endpoints)
     - [`responses`](#responses)
     - [`chat_completions`](#chat_completions)
@@ -138,12 +132,6 @@ zerogpu chat "Why does my API keep getting rate-limited?" -m gpt-oss-120b -r
 
 # Multilingual reasoning
 zerogpu chat "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
-
-# A 262K-token context, for whole repos and very long documents
-zerogpu chat "$(cat ARCHITECTURE.md)" -m glm-5.2
-
-# Coding and agentic work, at a fraction of the flagship price
-zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash-0731
 ```
 
 | Option | Description |
@@ -159,11 +147,16 @@ zerogpu chat "Port this helper to async/await." -m deepseek-v4-flash-0731
 | `gpt-oss-120b` | 120B MoE, 131K context, reasoning + function calling. |
 | `llama-guard-4-12b` | 12B dense, 164K context, brand safety + text moderation. |
 | `deepseek-v4.1-flash` | Sparse MoE (8B active on input, 16B on output), 1M context, long-context agentic work + function calling. |
+| `glm-5.3-flash` | 1M context, coding and long-horizon agent work + function calling. |
+| `gpt-4.1-mini` | 1M context, coding + function calling, with structured outputs. |
+| `gpt-6-luna` | 272K context, reasoning + function calling, text and image input. |
+| `gpt-5.6-luna` | 272K context, cost-optimized reasoning + function calling. |
+| `gpt-5.4-nano` | 400K context, classification, extraction, and routing + function calling. |
+| `qwen3.6-35b-a3b` | 35B MoE, 16K context, multimodal chat — document, image, and video analysis + data extraction. |
+| `zlm-v1-tool-decisions` | 0.6B, 24K context, MCP tool selection and argument generation for agents. |
 | `qwen3-30b-a3b-fp8` | 30B MoE, 100+ languages, reasoning + function calling. |
-| `glm-5.2` | 753B MoE, 262K context, reasoning + function calling. The platform's most capable model, and its priciest. |
-| `deepseek-v4-flash-0731` | 284B MoE (13B active), 1M context, coding and agentic workflows. |
 
-`qwen3-30b-a3b-fp8`, `glm-5.2`, and `deepseek-v4-flash-0731` are served by the Chat Completions API rather than the Responses API; the CLI routes them automatically.
+`qwen3-30b-a3b-fp8` is served by the Chat Completions API rather than the Responses API; the CLI routes it automatically.
 
 #### `chat_thinking`
 
@@ -211,19 +204,6 @@ zerogpu classify_domain nytimes.com
 
 Returns scored content categories plus topics, keywords, and inferred user intent for the domain. When you have the page text and need per-URL precision, use `classify_iab` instead.
 
-#### `classify_structured`
-
-Classify text against a **structured schema** of categories and allowed labels using GLiNER2.
-
-```bash
-zerogpu classify_structured "The product arrived broken and I want a refund." \
-  --schema '{"sentiment":["positive","negative","neutral"],"intent":["complaint","praise","question"]}'
-```
-
-| Option | Description |
-|---|---|
-| `-s, --schema <json>` | **Required.** JSON object mapping category name → allowed labels. |
-
 #### `classify_zero_shot`
 
 Zero-shot classification against arbitrary candidate labels using **DeBERTa v3**.
@@ -242,60 +222,6 @@ zerogpu classify_zero_shot "The stock market dropped 3% today." \
 |---|---|
 | `-l, --label <label>` | Candidate label (repeatable). |
 | `--labels <a,b,c>` | Comma-separated list of candidate labels. |
-
----
-
-### Extraction
-
-#### `extract_entities`
-
-Extract named entities from text using **GLiNER2** with custom labels.
-
-```bash
-zerogpu extract_entities "Tim Cook visited the Cupertino campus on Tuesday." \
-  --label person --label organization --label location --threshold 0.4
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `-l, --label <label>` | — | Entity label to extract (repeatable). |
-| `--labels <a,b,c>` | — | Comma-separated entity labels. |
-| `-t, --threshold <number>` | `0.3` | Confidence threshold between 0 and 1. |
-
-#### `extract_json`
-
-Extract **structured JSON** from text against a provided schema using GLiNER2.
-
-```bash
-zerogpu extract_json "Email Jane Doe at jane@example.com or call 555-0100." \
-  --schema '{"contact":["name::str::Full name","email::str::Email address","phone::str::Phone number"]}'
-```
-
-| Option | Description |
-|---|---|
-| `-s, --schema <json>` | **Required.** Schema as a JSON string. Field format: `name::type::description`. |
-
-#### `extract_pii`
-
-Extract PII entities (persons, emails, phone numbers, etc.) using `gliner-multi-pii-v1`.
-
-```bash
-zerogpu extract_pii "Contact John Smith at john@acme.com or +1-415-555-0100." \
-  --threshold 0.5 --categories identity,contact
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `-t, --threshold <number>` | `0.5` | Confidence threshold. |
-| `-c, --categories <list>` | `identity,contact` | Comma-separated PII categories. |
-
-#### `redact_pii`
-
-Detect and **redact** PII in text — returns the input with sensitive spans masked by label.
-
-```bash
-zerogpu redact_pii "Call Sarah at 415-555-0100 or email sarah@acme.com."
-```
 
 ---
 
@@ -320,7 +246,7 @@ Text comes from the positional argument, or from stdin when there isn't one, whi
 POST to `/v1/responses`.
 
 ```bash
-zerogpu responses "Email John Smith at john@acme.com." -m gliner-multi-pii-v1 \
+zerogpu responses "Email John Smith at john@acme.com." -m gliner2.5-multi-v1 \
   --metadata '{"usecase":"redact","mask":"label"}'
 
 # Long input from a file, on stdin
@@ -334,7 +260,7 @@ POST to `/v1/chat/completions`. Also available as `chat-completions`.
 ```bash
 zerogpu chat_completions "Explique la mise en cache en une phrase." -m qwen3-30b-a3b-fp8
 
-zerogpu chat_completions "The app uses Python 3.11 and PostgreSQL 15." -m gliner2-base-v1 \
+zerogpu chat_completions "The app uses Python 3.11 and PostgreSQL 15." -m gliner2.5-base-v1 \
   --metadata '{"usecase":"ner","labels":["programming language","database"],"threshold":0.3}'
 ```
 

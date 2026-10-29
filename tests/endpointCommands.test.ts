@@ -80,7 +80,7 @@ describe("responses", () => {
       "responses",
       "The Lakers won.",
       "-m",
-      "gliner2-base-v1",
+      "gliner2.5-base-v1",
       "-i",
       "Be brief.",
       "--metadata",
@@ -91,7 +91,7 @@ describe("responses", () => {
     expect(req.url).toBe(RESPONSES_ENDPOINT);
     expect(req.headers["x-api-key"]).toBe("zgpu-api-test");
     expect(req.body).toEqual({
-      model: "gliner2-base-v1",
+      model: "gliner2.5-base-v1",
       input: "The Lakers won.",
       instructions: "Be brief.",
       metadata: { usecase: "ner", labels: ["team"] },
@@ -130,11 +130,11 @@ describe("responses", () => {
 
   it("records savings under the requested model", async () => {
     respondWith(payload);
-    await zerogpu("responses", "hi", "-m", "gliner2-base-v1");
+    await zerogpu("responses", "hi", "-m", "gliner2.5-base-v1");
     const savings = readSavings();
     expect(savings.totalRequests).toBe(1);
     expect(savings.totalTokens).toBe(16);
-    expect(savings.byModel["gliner2-base-v1"]?.requests).toBe(1);
+    expect(savings.byModel["gliner2.5-base-v1"]?.requests).toBe(1);
   });
 
   it("exits 1 when the response has no output text", async () => {
@@ -178,7 +178,7 @@ describe("chat_completions", () => {
 
   it("is reachable by its dashed alias and maps usage for savings", async () => {
     respondWith(payload);
-    await zerogpu("chat-completions", "Say hi.", "-m", "glm-5.2");
+    await zerogpu("chat-completions", "Say hi.", "-m", "qwen3-30b-a3b-fp8");
     expect(sentRequest().body.messages).toEqual([{ role: "user", content: "Say hi." }]);
     expect(readSavings().totalTokens).toBe(23);
   });
@@ -215,7 +215,7 @@ describe("shared failures", () => {
 
   it("rejects invalid --metadata before sending anything", async () => {
     await expect(
-      zerogpu("responses", "hi", "-m", "gliner2-base-v1", "--metadata", "[1,2]"),
+      zerogpu("responses", "hi", "-m", "gliner2.5-base-v1", "--metadata", "[1,2]"),
     ).rejects.toThrow("exit 1");
     expect(errorSpy).toHaveBeenCalledWith("--metadata must be a JSON object.");
     expect(fetchMock).not.toHaveBeenCalled();

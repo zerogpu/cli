@@ -52,16 +52,16 @@ describe("computeCallSavings", () => {
     );
     expect(tokens).toBe(1020);
     const claude = (740 * 5 + 280 * 25) / 1e6; // 0.0107
-    const zgpu = (740 * 0.02 + 280 * 0.05) / 1e6; // real ZeroGPU cost
+    const zgpu = (740 * 0.15 + 280 * 0.28) / 1e6; // real ZeroGPU cost
     expect(savingsUsd).toBeCloseTo(claude - zgpu, 8);
   });
 
   it("is cheaper against the Sonnet baseline", () => {
-    const opus = computeCallSavings(740, 280, "claude-opus-4-8", "gliner2-base-v1").savingsUsd;
-    const sonnet = computeCallSavings(740, 280, "claude-sonnet-4-6", "gliner2-base-v1").savingsUsd;
+    const opus = computeCallSavings(740, 280, "claude-opus-4-8", "gliner2.5-base-v1").savingsUsd;
+    const sonnet = computeCallSavings(740, 280, "claude-sonnet-4-6", "gliner2.5-base-v1").savingsUsd;
     expect(sonnet).toBeLessThan(opus);
     const claude = (740 * 3 + 280 * 15) / 1e6; // Sonnet: 0.00642
-    const zgpu = (740 * 0.02 + 280 * 0.05) / 1e6; // gliner2 real cost
+    const zgpu = (740 * 0.02 + 280 * 0.05) / 1e6; // gliner2.5 real cost
     expect(sonnet).toBeCloseTo(claude - zgpu, 8);
   });
 
@@ -73,15 +73,15 @@ describe("computeCallSavings", () => {
   });
 
   it("falls back to Opus pricing for an unknown baseline", () => {
-    const unknown = computeCallSavings(740, 280, "totally-made-up", "gliner2-base-v1").savingsUsd;
-    const opus = computeCallSavings(740, 280, "claude-opus-4-8", "gliner2-base-v1").savingsUsd;
+    const unknown = computeCallSavings(740, 280, "totally-made-up", "gliner2.5-base-v1").savingsUsd;
+    const opus = computeCallSavings(740, 280, "claude-opus-4-8", "gliner2.5-base-v1").savingsUsd;
     expect(unknown).toBeCloseTo(opus, 10);
   });
 
   it("falls back to a default ZeroGPU rate for an unknown model", () => {
-    const known = computeCallSavings(740, 280, "claude-opus-4-8", "glm-5.2").savingsUsd;
+    const known = computeCallSavings(740, 280, "claude-opus-4-8", "gpt-4.1-mini").savingsUsd;
     const unknown = computeCallSavings(740, 280, "claude-opus-4-8", "some-new-zgpu-model").savingsUsd;
-    // fallback equals the priciest published rate, glm-5.2's {1.10, 3.50}
+    // fallback equals the priciest published rate, gpt-4.1-mini's {0.40, 1.60}
     expect(unknown).toBeCloseTo(known, 10);
   });
 
@@ -92,8 +92,8 @@ describe("computeCallSavings", () => {
     for (const model of [
       "gpt-oss-120b",
       "qwen3-30b-a3b-fp8",
-      "glm-5.2",
-      "deepseek-v4-flash-0731",
+      "gpt-4.1-mini",
+      "deepseek-v4.1-flash",
       "LFM2.5-1.2B-Instruct",
     ]) {
       expect(unknown).toBeLessThanOrEqual(
@@ -111,23 +111,32 @@ describe("ZGPU_PRICING tracks the published model catalog", () => {
   // CLI silently keeps a stale rate and misreports savings — which is exactly how
   // gpt-oss-120b sat at $0.03/$0.10 long after it was repriced to $0.15/$0.60.
   const CATALOG: Record<string, { in: number; out: number }> = {
+    "gpt-4.1-mini": { in: 0.4, out: 1.6 },
+    "gpt-6-luna": { in: 0.1, out: 0.5 },
+    "gpt-5.6-luna": { in: 0.2, out: 1.2 },
+    "gpt-5.4-nano": { in: 0.2, out: 1.25 },
     "gpt-oss-120b": { in: 0.15, out: 0.6 },
-    "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
-    "glm-5.2": { in: 1.1, out: 3.5 },
+    "qwen3-30b-a3b-fp8": { in: 0.1, out: 0.45 },
+    "qwen3.6-35b-a3b": { in: 0.2, out: 1.5 },
+    "glm-5.3-flash": { in: 0.1, out: 0.35 },
     "deepseek-v4.1-flash": { in: 0.3, out: 1.2 },
-    "deepseek-v4-flash-0731": { in: 0.16, out: 0.38 },
     "llama-guard-4-12b": { in: 0.18, out: 0.18 },
-    "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
-    "zlm-v2-iab-classify-edge-enriched": { in: 0.025, out: 0.15 },
+    "llama-3.1-8b-instruct-fast": { in: 0.15, out: 0.28 },
+    "llama-3.2-3b-instruct-fast": { in: 0.05, out: 0.3 },
+    "zlm-v1-tool-decisions": { in: 0.05, out: 0.15 },
+    "zlm-v2-iab-classify-edge-enriched": { in: 0.05, out: 0.15 },
     "zlm-v1-iab-classify-edge": { in: 0.02, out: 0.05 },
     "zlm-v1-iab-domain-classifier": { in: 0.02, out: 0.05 },
-    "zlm-v1-signal-extract": { in: 0.02, out: 0.05 },
-    "gliner-multi-pii-v1": { in: 0.02, out: 0.05 },
-    "gliner2-base-v1": { in: 0.02, out: 0.05 },
+    "zlm-v1-signal-extract": { in: 0.04, out: 0.1 },
+    "gliner2.5-base-v1": { in: 0.02, out: 0.05 },
+    "gliner2.5-multi-v1": { in: 0.02, out: 0.05 },
+    "gliner2.5-decide-v1": { in: 0.004, out: 0 },
     "deberta-v3-small": { in: 0.02, out: 0.05 },
     "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
     "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
-    "zlm-v1-moderation-edge": { in: 0.02, out: 0.05 },
+    "zlm-v1-moderation-edge": { in: 0.1, out: 0.15 },
+    "whisper-tiny": { in: 0, out: 0 },
+    "chatterbox-nano": { in: 0, out: 0 },
     "all-minilm-l6-v2": { in: 0.004, out: 0 },
     "bge-small-en-v1.5": { in: 0.004, out: 0 },
   };
@@ -237,7 +246,7 @@ describe("CTA in savings messages", () => {
         totalTokens: 5000,
         totalSavingsUsd: 0.5,
         firstRecordedAt: "2026-06-01T00:00:00.000Z",
-        byModel: { "gliner2-base-v1": { requests: 5, savingsUsd: 0.5, tokens: 5000 } },
+        byModel: { "gliner2.5-base-v1": { requests: 5, savingsUsd: 0.5, tokens: 5000 } },
       }),
     );
     expect(populated).toContain("platform.zerogpu.ai");
@@ -253,7 +262,7 @@ describe("report wording (rounded, host-neutral)", () => {
         totalTokens: 430120,
         totalSavingsUsd: 2.14,
         firstRecordedAt: "2026-04-12T00:00:00.000Z",
-        byModel: { "gliner2-base-v1": { requests: 58, savingsUsd: 2.14, tokens: 430120 } },
+        byModel: { "gliner2.5-base-v1": { requests: 58, savingsUsd: 2.14, tokens: 430120 } },
       }),
     );
     expect(out).toContain("≈ $2");

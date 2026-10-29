@@ -20,23 +20,33 @@ const DEFAULT_BASELINE = "claude-opus-4-8";
 // Source: https://docs.zerogpu.ai model catalog. Exported so a test can pin
 // this table to the published catalog — see tests/savings.test.ts.
 export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
+  "gpt-4.1-mini": { in: 0.4, out: 1.6 },
+  "gpt-6-luna": { in: 0.1, out: 0.5 },
+  "gpt-5.6-luna": { in: 0.2, out: 1.2 },
+  "gpt-5.4-nano": { in: 0.2, out: 1.25 },
   "gpt-oss-120b": { in: 0.15, out: 0.6 },
-  "qwen3-30b-a3b-fp8": { in: 0.05, out: 0.3 },
-  "glm-5.2": { in: 1.1, out: 3.5 },
+  "qwen3-30b-a3b-fp8": { in: 0.1, out: 0.45 },
+  "qwen3.6-35b-a3b": { in: 0.2, out: 1.5 },
+  "glm-5.3-flash": { in: 0.1, out: 0.35 },
   "deepseek-v4.1-flash": { in: 0.3, out: 1.2 },
-  "deepseek-v4-flash-0731": { in: 0.16, out: 0.38 },
   "llama-guard-4-12b": { in: 0.18, out: 0.18 },
-  "llama-3.1-8b-instruct-fast": { in: 0.02, out: 0.05 },
+  "llama-3.1-8b-instruct-fast": { in: 0.15, out: 0.28 },
+  "llama-3.2-3b-instruct-fast": { in: 0.05, out: 0.3 },
+  "zlm-v1-tool-decisions": { in: 0.05, out: 0.15 },
   "zlm-v1-iab-classify-edge": { in: 0.02, out: 0.05 },
-  "zlm-v2-iab-classify-edge-enriched": { in: 0.025, out: 0.15 },
+  "zlm-v2-iab-classify-edge-enriched": { in: 0.05, out: 0.15 },
   "zlm-v1-iab-domain-classifier": { in: 0.02, out: 0.05 },
-  "zlm-v1-signal-extract": { in: 0.02, out: 0.05 },
-  "gliner-multi-pii-v1": { in: 0.02, out: 0.05 },
-  "gliner2-base-v1": { in: 0.02, out: 0.05 },
+  "zlm-v1-signal-extract": { in: 0.04, out: 0.1 },
+  "gliner2.5-base-v1": { in: 0.02, out: 0.05 },
+  "gliner2.5-multi-v1": { in: 0.02, out: 0.05 },
+  "gliner2.5-decide-v1": { in: 0.004, out: 0 },
   "deberta-v3-small": { in: 0.02, out: 0.05 },
   "LFM2.5-1.2B-Thinking": { in: 0.02, out: 0.05 },
   "LFM2.5-1.2B-Instruct": { in: 0.02, out: 0.05 },
-  "zlm-v1-moderation-edge": { in: 0.02, out: 0.05 },
+  "zlm-v1-moderation-edge": { in: 0.1, out: 0.15 },
+  // The speech models publish $0 for both token rates in the catalog.
+  "whisper-tiny": { in: 0, out: 0 },
+  "chatterbox-nano": { in: 0, out: 0 },
   // Embedding models bill input tokens only; there are no output tokens to
   // charge, so `out: 0` is the real rate, not a placeholder.
   "all-minilm-l6-v2": { in: 0.004, out: 0 },
@@ -44,8 +54,8 @@ export const ZGPU_PRICING: Record<string, { in: number; out: number }> = {
 };
 // Conservative fallback for any model id not in the table above: the priciest
 // published rate, so an unlisted model never overstates savings. Currently
-// glm-5.2, which is an order of magnitude dearer than the edge models.
-const ZGPU_FALLBACK = { in: 1.1, out: 3.5 };
+// gpt-4.1-mini, which holds both the highest input and the highest output rate.
+const ZGPU_FALLBACK = { in: 0.4, out: 1.6 };
 
 // Cadence: aim to show the savings note roughly once every 2–3 routed calls,
 // never twice in a row, and guaranteed within a bounded window.
